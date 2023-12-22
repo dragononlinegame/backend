@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider          = "postgres"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+enum roles {
+  User
+  Admin
+}
+
+enum status {
+  Pending
+  Completed
+  Failed
+}
+
+enum userStatus {
+  Active
+  Inactive
+  Suspended
+}
+
+enum transactionType {
+  Credit
+  Debit
+}
+
+model user {
+  id       Int        @id @default(autoincrement())
+  email    String     @unique
+  password String
+  username String     @unique
+  status   userStatus @default(Active)
+
+  role roles @default(User)
+
+  createdAt DateTime @default(now())
+
+  wallet wallet?
+  bets   bet[]
+}
+
+model wallet {
+  id      Int     @id @default(autoincrement())
+  userId  Int     @unique
+  balance Decimal @default(0)
+
+  user         user          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions transaction[]
+}
+
+model transaction {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  amount      Decimal
+  type        transactionType @default(Debit)
+  status      status          @default(Completed)
+  description String?
+
+  walletId Int
+  wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model game {
+  id     Int @id @default(autoincrement())
+  serial Int
+  type   Int
+
+  started_at DateTime
+  ended_at   DateTime
+
+  result String?
+
+  updatedAt DateTime @updatedAt()
+  createdAt DateTime @default(now())
+
+  bets bet[]
+  wins win[]
+}
+
+model bet {
+  id         Int     @id @default(autoincrement())
+  amount     Decimal
+  prediction String
+
+  createdAt DateTime @default(now())
+
+  gameId Int
+  game   game @relation(fields: [gameId], references: [id])
+
+  userId Int
+  user   user @relation(fields: [userId], references: [id])
+
+  win win?
+}
+
+model win {
+  id Int @id @default(autoincrement())
+
+  winAmount Decimal
+  isClaimed Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  betId Int @unique
+  bet   bet @relation(fields: [betId], references: [id])
+
+  gameId Int
+  game   game @relation(fields: [gameId], references: [id])
+}
