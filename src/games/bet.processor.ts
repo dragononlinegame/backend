@@ -1,6 +1,7 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
+import { prisma } from 'src/lib/prisma';
 
 @Processor('bet-processing')
 export class BetProcessor {

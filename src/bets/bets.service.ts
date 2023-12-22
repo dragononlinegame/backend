@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { CreateBetDto } from './dto/create-bet.dto';
+import { prisma } from 'src/lib/prisma';
 
 @Injectable()
 export class BetsService {

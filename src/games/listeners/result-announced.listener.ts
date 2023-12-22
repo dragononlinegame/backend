@@ -4,6 +4,7 @@ import { ResultAnnouncedEvent } from '../events/resultAnnouncedEvent';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Numbers } from 'src/constants/numbers';
+import { prisma } from 'src/lib/prisma';
 
 @Injectable()
 export class ResultAnnouncedListener {

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { prisma } from 'lib/prisma';
+import { prisma } from 'src/lib/prisma';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
