@@ -12,8 +12,8 @@ export class GamesService {
 
   private readonly durations = {
     0: 1,
-    1: 5,
-    3: 10,
+    1: 3,
+    2: 5,
   };
 
   private readonly numbers = Numbers;

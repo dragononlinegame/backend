@@ -9,7 +9,6 @@ import {
   Query,
   Post,
   Body,
-  HttpCode,
 } from '@nestjs/common';
 import { BetsService } from './bets.service';
 import { roles } from '@prisma/client';
@@ -34,9 +33,9 @@ export class BetsController {
     @Query('skip') skip: string = '0',
   ) {
     if (req.user.role !== roles.Admin) {
-      return this.betsService.findAll(type, limit, skip);
-    } else {
       return this.betsService.findByUserId(req.user.id, type, limit, skip);
+    } else {
+      return this.betsService.findAll(type, limit, skip);
     }
   }
 

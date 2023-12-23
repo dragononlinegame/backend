@@ -69,8 +69,17 @@ export class GamesController {
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
-  // @Get('cron')
-  issueNewGame() {
+  issueNewGameT1() {
     return this.gamesService.issueNewGame();
+  }
+
+  @Cron('*/3 * * * *')
+  issueNewGameT2() {
+    return this.gamesService.issueNewGame(1);
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  issueNewGameT3() {
+    return this.gamesService.issueNewGame(2);
   }
 }
