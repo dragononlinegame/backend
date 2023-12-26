@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { Charset, generateOne } from 'referral-codes';
+import { charset, Charset, generate } from 'referral-codes';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRegisteredEvent } from 'src/users/events/userRegisteredEvent';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -58,12 +58,13 @@ export class AuthService {
   ) {
     const hashedPassword = await this.hashPassword(password);
 
-    const ref_code = generateOne({
+    const ref_code = generate({
       pattern: '####',
-      charset: Charset.ALPHANUMERIC,
+      charset: charset(Charset.ALPHANUMERIC),
       prefix: '',
       postfix: '',
-    });
+      count: 1,
+    })[0];
 
     const { data: user } = await this.usersService.create({
       email: email,
