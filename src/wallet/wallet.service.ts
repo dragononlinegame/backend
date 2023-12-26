@@ -38,6 +38,35 @@ export class WalletService {
       },
     });
 
+    const upline = await this.databaseService.teamConfig.findFirst({
+      where: {
+        userId: userid,
+        level: 1,
+      },
+    });
+
+    if (upline) {
+      const bonus_amount = amount * parseFloat(process.env.SPONSOR_INCOME);
+
+      await this.databaseService.wallet.update({
+        where: {
+          userId: upline.uplineId,
+        },
+        data: {
+          balance: {
+            increment: bonus_amount,
+          },
+          transactions: {
+            create: {
+              amount: bonus_amount,
+              type: 'Credit',
+              description: 'Sponsor Income',
+            },
+          },
+        },
+      });
+    }
+
     return {
       success: true,
       data: 'success',

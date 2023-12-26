@@ -34,18 +34,31 @@ enum transactionType {
 }
 
 model user {
-  id       Int        @id @default(autoincrement())
-  email    String     @unique
+  id       Int    @id @default(autoincrement())
+  email    String @unique
   password String
-  username String     @unique
-  status   userStatus @default(Active)
+  username String @unique
 
-  role roles @default(User)
+  referralCode String @unique
+
+  status userStatus @default(Active)
+  role   roles      @default(User)
 
   createdAt DateTime @default(now())
 
   wallet wallet?
   bets   bet[]
+}
+
+model teamConfig {
+  userId    Int
+  uplineId  Int
+  level     Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, uplineId])
+  @@index([uplineId])
+  @@index([userId])
 }
 
 model wallet {

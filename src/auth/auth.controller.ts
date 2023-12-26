@@ -18,6 +18,7 @@ export class AuthController {
       signUpDto.email,
       signUpDto.password,
       signUpDto.username,
+      signUpDto.referral,
     );
   }
 }

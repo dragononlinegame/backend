@@ -2,12 +2,18 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { Charset, generateOne } from 'referral-codes';
+import { DatabaseService } from 'src/database/database.service';
+import { UserRegisteredEvent } from 'src/users/events/userRegisteredEvent';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
+    private readonly databaseService: DatabaseService,
     private readonly usersService: UsersService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
@@ -44,14 +50,39 @@ export class AuthService {
     };
   }
 
-  async register(email: string, password: string, username: string) {
+  async register(
+    email: string,
+    password: string,
+    username: string,
+    referral?: string,
+  ) {
     const hashedPassword = await this.hashPassword(password);
+
+    const ref_code = generateOne({
+      pattern: '####',
+      charset: Charset.ALPHANUMERIC,
+      prefix: '',
+      postfix: '',
+    });
 
     const { data: user } = await this.usersService.create({
       email: email,
       password: hashedPassword,
       username: username ?? '',
+      referralCode: ref_code,
     });
+
+    const referrer = await this.databaseService.user.findUnique({
+      where: {
+        referralCode: referral ?? '0000',
+      },
+    });
+
+    // Process Winnings asynchronusly
+    const userRegisteredEvent = new UserRegisteredEvent();
+    userRegisteredEvent.userId = user.id;
+    userRegisteredEvent.referrerId = referrer.id;
+    this.eventEmitter.emit('user.registered', userRegisteredEvent);
 
     const payload = {
       sub: user.id,
