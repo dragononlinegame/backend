@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { prisma } from 'src/lib/prisma';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
@@ -189,16 +194,27 @@ export class GamesService {
   }
 
   async findAll(type: string, limit: string, skip: string) {
-    const cached_recents = await this.cacheManager.get(
-      cached_keys.CACHED_RECENT_GAMES,
-    );
-    if (cached_recents) {
-      return { success: true, data: cached_recents, cachehit: true };
+    const parsedType = parseInt(type);
+    const parsedLimit = parseInt(limit);
+    const parsedSkip = parseInt(skip);
+
+    if (isNaN(parsedType) || isNaN(parsedLimit) || isNaN(parsedSkip)) {
+      throw new BadRequestException('Invalid params.');
+    }
+
+    const cacheKey = `${cached_keys.CACHED_RECENT_GAMES}_${parsedType}`;
+
+    const isFirstPage = parsedLimit === 10 && parsedSkip === 0;
+    if (isFirstPage) {
+      const cached_recents = await this.cacheManager.get(cacheKey);
+      if (cached_recents) {
+        return { success: true, data: cached_recents, cachehit: true };
+      }
     }
 
     const games = await prisma.game.findMany({
       where: {
-        type: parseInt(type),
+        type: parsedType,
         NOT: [
           {
             result: null,
@@ -216,13 +232,13 @@ export class GamesService {
         ended_at: true,
         result: true,
       },
-      take: parseInt(limit),
-      skip: parseInt(skip),
+      take: parsedLimit,
+      skip: parsedSkip,
     });
 
     const total = await prisma.game.count({
       where: {
-        type: parseInt(type),
+        type: parsedType,
         NOT: [
           {
             result: null,
@@ -231,11 +247,7 @@ export class GamesService {
       },
     });
 
-    await this.cacheManager.set(
-      cached_keys.CACHED_RECENT_GAMES,
-      { games, total },
-      0,
-    );
+    await this.cacheManager.set(cacheKey, { games, total }, 0);
 
     return {
       success: true,
@@ -266,16 +278,24 @@ export class GamesService {
   }
 
   async findCurrent(type: string) {
-    const cached_current = await this.cacheManager.get(
-      cached_keys.CACHED_CURRENT_GAME,
-    );
+    const parsedType = parseInt(type);
+
+    if (isNaN(parsedType)) {
+      throw new BadRequestException(
+        'Invalid game type. Must be a valid number.',
+      );
+    }
+
+    const cacheKey = `${cached_keys.CACHED_CURRENT_GAME}_${parsedType}`;
+
+    const cached_current = await this.cacheManager.get(cacheKey);
     if (cached_current) {
       return { success: true, data: cached_current, cachehit: true };
     }
 
     const game = await prisma.game.findFirst({
       where: {
-        type: parseInt(type),
+        type: parsedType,
         result: null,
       },
       orderBy: {
@@ -292,7 +312,7 @@ export class GamesService {
 
     if (!game) throw new NotFoundException('Can not find New Issued Game.');
 
-    await this.cacheManager.set(cached_keys.CACHED_CURRENT_GAME, game, 0);
+    await this.cacheManager.set(cacheKey, game, 0);
 
     return { success: true, data: game };
   }
@@ -361,8 +381,7 @@ export class GamesService {
         serial: lastGameWithNullResult.serial + 1,
       });
 
-      await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
-      await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
+      await this.cacheManager.reset();
 
       return new_game;
     } else {
@@ -388,8 +407,7 @@ export class GamesService {
           serial: last_game.serial + 1,
         });
 
-        await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
-        await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
+        await this.cacheManager.reset();
 
         return new_game;
       } else {
@@ -399,8 +417,7 @@ export class GamesService {
           serial: 1,
         });
 
-        await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
-        await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
+        await this.cacheManager.reset();
 
         return new_game;
       }
