@@ -1,10 +1,26 @@
 import { Injectable } from '@nestjs/common';
-import { prisma } from 'src/lib/prisma';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class WalletService {
+  constructor(private readonly databaseService: DatabaseService) {}
+
+  async getWalletByUserId(id: number) {
+    const wallet = await this.databaseService.wallet.findFirst({
+      where: {
+        userId: id,
+      },
+      select: {
+        id: true,
+        balance: true,
+      },
+    });
+
+    return { success: true, data: wallet };
+  }
+
   async rechargeWalletByUserId(userid: number, amount: number) {
-    await prisma.wallet.update({
+    await this.databaseService.wallet.update({
       where: {
         userId: userid,
       },
@@ -33,13 +49,13 @@ export class WalletService {
     limit: string = '10',
     skip: string = '0',
   ) {
-    const wallet = await prisma.wallet.findFirst({
+    const wallet = await this.databaseService.wallet.findFirst({
       where: {
         userId: userid,
       },
     });
 
-    const transactions = await prisma.transaction.findMany({
+    const transactions = await this.databaseService.transaction.findMany({
       where: {
         walletId: wallet.id,
       },
@@ -50,7 +66,7 @@ export class WalletService {
       skip: parseInt(skip),
     });
 
-    const total = await prisma.transaction.count({
+    const total = await this.databaseService.transaction.count({
       where: {
         walletId: wallet.id,
       },

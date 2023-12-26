@@ -4,12 +4,13 @@ import { ResultAnnouncedEvent } from '../events/resultAnnouncedEvent';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Numbers } from 'src/constants/numbers';
-import { prisma } from 'src/lib/prisma';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class ResultAnnouncedListener {
   constructor(
     @InjectQueue('bet-processing') private readonly betProcessingQueue: Queue,
+    private readonly databaseService: DatabaseService,
   ) {}
 
   private readonly Numbers = Numbers;
@@ -22,7 +23,7 @@ export class ResultAnnouncedListener {
       ...this.Numbers[Number(payload.result)].color,
     ];
 
-    const winning_bets = await prisma.bet.findMany({
+    const winning_bets = await this.databaseService.bet.findMany({
       where: {
         gameId: payload.gameId,
         prediction: {

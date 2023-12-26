@@ -6,16 +6,17 @@ import { AuthModule } from './auth/auth.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BetsModule } from './bets/bets.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { WalletService } from './wallet/wallet.service';
-import { WalletController } from './wallet/wallet.controller';
 import { BullModule } from '@nestjs/bull';
 import { CacheModule } from '@nestjs/cache-manager';
+import { DatabaseModule } from './database/database.module';
+import { WalletModule } from './wallet/wallet.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
-    GamesModule,
-    AuthModule,
-    BetsModule,
+    CacheModule.register({
+      isGlobal: true,
+    }),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     BullModule.forRoot({
@@ -25,11 +26,14 @@ import { CacheModule } from '@nestjs/cache-manager';
         password: process.env.RADIS_PASS,
       },
     }),
-    CacheModule.register({
-      isGlobal: true,
-    }),
+    DatabaseModule,
+    AuthModule,
+    UsersModule,
+    WalletModule,
+    GamesModule,
+    BetsModule,
   ],
-  controllers: [AppController, WalletController],
-  providers: [AppService, WalletService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { prisma } from 'src/lib/prisma';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -13,11 +12,13 @@ import { Numbers } from 'src/constants/numbers';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { cached_keys } from 'src/constants/cache-keys';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class GamesService {
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly databaseService: DatabaseService,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -58,15 +59,16 @@ export class GamesService {
       violet: 0,
     };
 
-    const betAmountSum_groupBy_prediction = await prisma.bet.groupBy({
-      by: ['prediction'],
-      where: {
-        gameId: game_id,
-      },
-      _sum: {
-        amount: true,
-      },
-    });
+    const betAmountSum_groupBy_prediction =
+      await this.databaseService.bet.groupBy({
+        by: ['prediction'],
+        where: {
+          gameId: game_id,
+        },
+        _sum: {
+          amount: true,
+        },
+      });
 
     for (const betGroup of betAmountSum_groupBy_prediction) {
       if (isNaN(parseInt(betGroup.prediction))) {
@@ -177,7 +179,7 @@ export class GamesService {
     const endTime = new Date(startTime.getTime() + gameDuration * 60 * 1000);
 
     try {
-      const new_game = await prisma.game.create({
+      const new_game = await this.databaseService.game.create({
         data: {
           type: createGameDto.type,
           serial: createGameDto.serial,
@@ -212,7 +214,7 @@ export class GamesService {
       }
     }
 
-    const games = await prisma.game.findMany({
+    const games = await this.databaseService.game.findMany({
       where: {
         type: parsedType,
         NOT: [
@@ -236,7 +238,7 @@ export class GamesService {
       skip: parsedSkip,
     });
 
-    const total = await prisma.game.count({
+    const total = await this.databaseService.game.count({
       where: {
         type: parsedType,
         NOT: [
@@ -259,7 +261,7 @@ export class GamesService {
   }
 
   async findOne(id: number) {
-    const game = await prisma.game.findFirst({
+    const game = await this.databaseService.game.findFirst({
       where: {
         id: id,
       },
@@ -293,7 +295,7 @@ export class GamesService {
       return { success: true, data: cached_current, cachehit: true };
     }
 
-    const game = await prisma.game.findFirst({
+    const game = await this.databaseService.game.findFirst({
       where: {
         type: parsedType,
         result: null,
@@ -318,7 +320,7 @@ export class GamesService {
   }
 
   async update(id: number, updateGameDto: UpdateGameDto) {
-    const game = await prisma.game.update({
+    const game = await this.databaseService.game.update({
       where: {
         id: id,
       },
@@ -333,7 +335,7 @@ export class GamesService {
   }
 
   async remove(id: number) {
-    await prisma.game.delete({
+    await this.databaseService.game.delete({
       where: {
         id: id,
       },
@@ -343,7 +345,13 @@ export class GamesService {
   }
 
   async issueNewGame(type: number = 0) {
-    const lastGameWithNullResult = await prisma.game.findFirst({
+    if (isNaN(type)) {
+      throw new BadRequestException(
+        'Invalid game type. Must be a valid number.',
+      );
+    }
+
+    const lastGameWithNullResult = await this.databaseService.game.findFirst({
       where: {
         type: type,
         result: null,
@@ -381,11 +389,12 @@ export class GamesService {
         serial: lastGameWithNullResult.serial + 1,
       });
 
-      await this.cacheManager.reset();
+      await this.cacheManager.del(`${cached_keys.CACHED_CURRENT_GAME}_${type}`);
+      await this.cacheManager.del(`${cached_keys.CACHED_RECENT_GAMES}_${type}`);
 
       return new_game;
     } else {
-      const last_game = await prisma.game.findFirst({
+      const last_game = await this.databaseService.game.findFirst({
         where: {
           type: type,
         },
@@ -407,7 +416,12 @@ export class GamesService {
           serial: last_game.serial + 1,
         });
 
-        await this.cacheManager.reset();
+        await this.cacheManager.del(
+          `${cached_keys.CACHED_CURRENT_GAME}_${type}`,
+        );
+        await this.cacheManager.del(
+          `${cached_keys.CACHED_RECENT_GAMES}_${type}`,
+        );
 
         return new_game;
       } else {
@@ -417,7 +431,12 @@ export class GamesService {
           serial: 1,
         });
 
-        await this.cacheManager.reset();
+        await this.cacheManager.del(
+          `${cached_keys.CACHED_CURRENT_GAME}_${type}`,
+        );
+        await this.cacheManager.del(
+          `${cached_keys.CACHED_RECENT_GAMES}_${type}`,
+        );
 
         return new_game;
       }

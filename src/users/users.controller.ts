@@ -10,20 +10,15 @@ import {
   Request,
   UseGuards,
   UnauthorizedException,
-  Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { Prisma, roles } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { WalletService } from 'src/wallet/wallet.service';
 
 @UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly walletService: WalletService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   findAll(
@@ -38,29 +33,6 @@ export class UsersController {
   @Get('profile')
   profile(@Request() req) {
     return this.usersService.findOneById(req.user.id);
-  }
-
-  @Get('wallet')
-  wallet(@Request() req) {
-    return this.usersService.getWalletByUserId(req.user.id);
-  }
-
-  @Get('wallet/transactions')
-  transactions(
-    @Request() req,
-    @Query('limit') limit: string = '10',
-    @Query('skip') skip: string = '0',
-  ) {
-    return this.walletService.findTransactionsByUserId(
-      req.user.id,
-      limit,
-      skip,
-    );
-  }
-
-  @Post('wallet/recharge')
-  topUpwallet(@Request() req, @Body() body) {
-    return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
   }
 
   @Get(':id')

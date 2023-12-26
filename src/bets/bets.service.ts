@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { CreateBetDto } from './dto/create-bet.dto';
-import { prisma } from 'src/lib/prisma';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class BetsService {
@@ -23,8 +23,10 @@ export class BetsService {
     '9',
   ];
 
+  constructor(private readonly databaseService: DatabaseService) {}
+
   async create(userid: number, createBetDto: CreateBetDto) {
-    const game = await prisma.game.findFirst({
+    const game = await this.databaseService.game.findFirst({
       where: {
         id: createBetDto.gameID,
       },
@@ -58,7 +60,7 @@ export class BetsService {
       throw new HttpException('Invalid Prediction', HttpStatus.BAD_REQUEST);
     }
 
-    await prisma.$transaction(async (txn) => {
+    await this.databaseService.$transaction(async (txn) => {
       const wallet = await txn.wallet.update({
         where: {
           userId: userid,
@@ -97,7 +99,7 @@ export class BetsService {
   }
 
   async findAll(type: string, limit: string, skip: string) {
-    const bets = await prisma.bet.findMany({
+    const bets = await this.databaseService.bet.findMany({
       where: {
         game: {
           type: parseInt(type),
@@ -127,7 +129,7 @@ export class BetsService {
       skip: parseInt(skip),
     });
 
-    const total = await prisma.bet.count({
+    const total = await this.databaseService.bet.count({
       where: {
         game: {
           type: parseInt(type),
@@ -150,7 +152,7 @@ export class BetsService {
     limit: string,
     skip: string,
   ) {
-    const bets = await prisma.bet.findMany({
+    const bets = await this.databaseService.bet.findMany({
       where: {
         userId: userid,
         game: {
@@ -181,7 +183,7 @@ export class BetsService {
       skip: parseInt(skip),
     });
 
-    const total = await prisma.bet.count({
+    const total = await this.databaseService.bet.count({
       where: {
         game: {
           type: parseInt(type),
@@ -193,7 +195,7 @@ export class BetsService {
   }
 
   async findOne(id: number) {
-    const bet = await prisma.bet.findFirst({
+    const bet = await this.databaseService.bet.findFirst({
       where: {
         id,
       },
@@ -219,7 +221,7 @@ export class BetsService {
   }
 
   async update(id: number, updateBetIput: Prisma.betUpdateInput) {
-    const user = await prisma.bet.update({
+    const user = await this.databaseService.bet.update({
       where: {
         id,
       },
@@ -230,7 +232,7 @@ export class BetsService {
   }
 
   async remove(id: number) {
-    await prisma.bet.delete({
+    await this.databaseService.bet.delete({
       where: {
         id,
       },

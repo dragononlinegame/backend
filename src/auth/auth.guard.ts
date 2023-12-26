@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { prisma } from 'src/lib/prisma';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private jwtService: JwtService,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -27,7 +30,7 @@ export class AuthGuard implements CanActivate {
       // so that we can access it in our route handlers
       // console.log(payload);
 
-      const user = await prisma.user.findFirst({
+      const user = await this.databaseService.user.findFirst({
         where: {
           id: payload.sub,
         },

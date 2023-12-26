@@ -1,11 +1,13 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
-import { prisma } from 'src/lib/prisma';
+import { DatabaseService } from 'src/database/database.service';
 
 @Processor('bet-processing')
 export class BetProcessor {
   private readonly logger = new Logger(BetProcessor.name);
+
+  constructor(private readonly databaseService: DatabaseService) {}
 
   @Process('processBet')
   async handleProcessBet(
@@ -32,7 +34,7 @@ export class BetProcessor {
 
       const winAmount = Number(bet.amount) * multiplier;
 
-      const update_wallet = prisma.wallet.update({
+      const update_wallet = this.databaseService.wallet.update({
         where: {
           userId: bet.userId,
         },
@@ -51,7 +53,7 @@ export class BetProcessor {
       });
 
       // Create a new win record
-      const create_win = prisma.win.create({
+      const create_win = this.databaseService.win.create({
         data: {
           gameId: bet.gameId,
           betId: bet.id,
@@ -60,7 +62,7 @@ export class BetProcessor {
         },
       });
 
-      await prisma.$transaction([update_wallet, create_win]);
+      await this.databaseService.$transaction([update_wallet, create_win]);
 
       this.logger.debug(`Bet ID :: ${bet.id} Processed`);
     } catch (error) {

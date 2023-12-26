@@ -4,15 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { prisma } from 'src/lib/prisma';
 import { Prisma } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class UsersService {
+  constructor(private readonly databaseService: DatabaseService) {}
+
   async create(createUserInput: Prisma.userCreateInput) {
     try {
-      const user = await prisma.user.create({
+      const user = await this.databaseService.user.create({
         data: {
           ...createUserInput,
           wallet: {
@@ -49,7 +51,7 @@ export class UsersService {
   }
 
   async findAll(limit: string, skip: string) {
-    const users = await prisma.user.findMany({
+    const users = await this.databaseService.user.findMany({
       take: parseInt(limit),
       skip: parseInt(skip),
       select: {
@@ -62,7 +64,7 @@ export class UsersService {
       },
     });
 
-    const total = await prisma.user.count();
+    const total = await this.databaseService.user.count();
 
     return {
       success: true,
@@ -74,7 +76,7 @@ export class UsersService {
   }
 
   async findOneById(id: number) {
-    const user = await prisma.user.findFirst({
+    const user = await this.databaseService.user.findFirst({
       where: {
         id,
       },
@@ -95,7 +97,7 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string) {
-    const user = await prisma.user.findFirst({
+    const user = await this.databaseService.user.findFirst({
       where: {
         email,
       },
@@ -117,7 +119,7 @@ export class UsersService {
   }
 
   async update(id: number, updateUserInput: Prisma.userUpdateInput) {
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await this.databaseService.user.update({
       where: {
         id,
       },
@@ -136,26 +138,12 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    await prisma.user.delete({
+    await this.databaseService.user.delete({
       where: {
         id,
       },
     });
 
     return { success: true, data: `Deleted a user with UserID #${id}` };
-  }
-
-  async getWalletByUserId(id: number) {
-    const wallet = await prisma.wallet.findFirst({
-      where: {
-        userId: id,
-      },
-      select: {
-        id: true,
-        balance: true,
-      },
-    });
-
-    return { success: true, data: wallet };
   }
 }
