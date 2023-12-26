@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { charset, Charset, generate } from 'referral-codes';
 import { DatabaseService } from 'src/database/database.service';
-import { UserRegisteredEvent } from 'src/users/events/userRegisteredEvent';
+import { UserRegisteredEvent } from './events/userRegisteredEvent';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
@@ -54,7 +54,7 @@ export class AuthService {
     email: string,
     password: string,
     username: string,
-    referral?: string,
+    referral: string,
   ) {
     const hashedPassword = await this.hashPassword(password);
 
