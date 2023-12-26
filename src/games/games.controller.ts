@@ -35,14 +35,6 @@ export class GamesController {
     return this.gamesService.findCurrent(type);
   }
 
-  // @Get('cron')
-  // issueNewGame(
-  //   @Query('secret') secret: string,
-  //   @Query('type') type: string = '0',
-  // ) {
-  //   return this.gamesService.issueNewGame(type);
-  // }
-
   @UseGuards(AuthGuard)
   @Get(':id')
   findOne(@Request() req, @Param('id', ParseIntPipe) id: number) {

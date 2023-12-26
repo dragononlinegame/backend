@@ -9,6 +9,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { WalletService } from './wallet/wallet.service';
 import { WalletController } from './wallet/wallet.controller';
 import { BullModule } from '@nestjs/bull';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
@@ -23,6 +24,9 @@ import { BullModule } from '@nestjs/bull';
         port: parseInt(process.env.RADIS_PORT as string),
         password: process.env.RADIS_PASS,
       },
+    }),
+    CacheModule.register({
+      isGlobal: true,
     }),
   ],
   controllers: [AppController, WalletController],

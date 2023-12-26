@@ -41,10 +41,14 @@ export class ResultAnnouncedListener {
     // Send each winning bet individually into the "bet-processing" queue
     for (const winningBet of winning_bets) {
       console.log(`Added to queue:: ${winningBet.id}`);
-      await this.betProcessingQueue.add('processBet', {
-        ...winningBet,
-        result: payload.result,
-      });
+      await this.betProcessingQueue.add(
+        'processBet',
+        {
+          ...winningBet,
+          result: payload.result,
+        },
+        { attempts: 3, backoff: { type: 'exponential', delay: 1000 } },
+      );
     }
   }
 }

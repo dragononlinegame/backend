@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { prisma } from 'src/lib/prisma';
 import { CreateGameDto } from './dto/create-game.dto';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ResultAnnouncedEvent } from './events/resultAnnouncedEvent';
 import { Numbers } from 'src/constants/numbers';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { cached_keys } from 'src/constants/cache-keys';
 
 @Injectable()
 export class GamesService {
-  constructor(private eventEmitter: EventEmitter2) {}
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   private readonly durations = {
     0: 1,
@@ -183,6 +189,13 @@ export class GamesService {
   }
 
   async findAll(type: string, limit: string, skip: string) {
+    const cached_recents = await this.cacheManager.get(
+      cached_keys.CACHED_RECENT_GAMES,
+    );
+    if (cached_recents) {
+      return { success: true, data: cached_recents, cachehit: true };
+    }
+
     const games = await prisma.game.findMany({
       where: {
         type: parseInt(type),
@@ -218,6 +231,12 @@ export class GamesService {
       },
     });
 
+    await this.cacheManager.set(
+      cached_keys.CACHED_RECENT_GAMES,
+      { games, total },
+      0,
+    );
+
     return {
       success: true,
       data: {
@@ -247,6 +266,13 @@ export class GamesService {
   }
 
   async findCurrent(type: string) {
+    const cached_current = await this.cacheManager.get(
+      cached_keys.CACHED_CURRENT_GAME,
+    );
+    if (cached_current) {
+      return { success: true, data: cached_current, cachehit: true };
+    }
+
     const game = await prisma.game.findFirst({
       where: {
         type: parseInt(type),
@@ -265,6 +291,8 @@ export class GamesService {
     });
 
     if (!game) throw new NotFoundException('Can not find New Issued Game.');
+
+    await this.cacheManager.set(cached_keys.CACHED_CURRENT_GAME, game, 0);
 
     return { success: true, data: game };
   }
@@ -295,7 +323,7 @@ export class GamesService {
   }
 
   async issueNewGame(type: number = 0) {
-    const last_game = await prisma.game.findFirst({
+    const lastGameWithNullResult = await prisma.game.findFirst({
       where: {
         type: type,
         result: null,
@@ -311,23 +339,30 @@ export class GamesService {
       },
     });
 
-    if (last_game) {
-      const winning_number = await this.findWinningNumber(last_game.id);
+    if (lastGameWithNullResult) {
+      const winning_number = await this.findWinningNumber(
+        lastGameWithNullResult.id,
+      );
 
       // Draw Result of prv game.
-      this.update(last_game.id, { result: winning_number.toString() });
+      this.update(lastGameWithNullResult.id, {
+        result: winning_number.toString(),
+      });
 
       // Process Winnings asynchronusly
       const resultAnnouncedEvent = new ResultAnnouncedEvent();
-      resultAnnouncedEvent.gameId = last_game.id;
+      resultAnnouncedEvent.gameId = lastGameWithNullResult.id;
       resultAnnouncedEvent.result = winning_number.toString();
       this.eventEmitter.emit('result.announced', resultAnnouncedEvent);
 
       // Issue New Game
       const new_game = await this.create({
         type: type,
-        serial: last_game.serial + 1,
+        serial: lastGameWithNullResult.serial + 1,
       });
+
+      await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
+      await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
 
       return new_game;
     } else {
@@ -353,6 +388,9 @@ export class GamesService {
           serial: last_game.serial + 1,
         });
 
+        await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
+        await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
+
         return new_game;
       } else {
         // Issue New Game
@@ -360,6 +398,9 @@ export class GamesService {
           type: type,
           serial: 1,
         });
+
+        await this.cacheManager.del(cached_keys.CACHED_CURRENT_GAME);
+        await this.cacheManager.del(cached_keys.CACHED_RECENT_GAMES);
 
         return new_game;
       }
