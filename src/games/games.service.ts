@@ -373,7 +373,7 @@ export class GamesService {
       );
 
       // Draw Result of prv game.
-      this.update(lastGameWithNullResult.id, {
+      await this.update(lastGameWithNullResult.id, {
         result: winning_number.toString(),
       });
 
@@ -382,6 +382,10 @@ export class GamesService {
       resultAnnouncedEvent.gameId = lastGameWithNullResult.id;
       resultAnnouncedEvent.result = winning_number.toString();
       this.eventEmitter.emit('result.announced', resultAnnouncedEvent);
+
+      console.log(
+        `emitted result.announced with gameID : ${lastGameWithNullResult.id}`,
+      );
 
       // Issue New Game
       const new_game = await this.create({
