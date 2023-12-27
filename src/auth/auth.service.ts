@@ -62,6 +62,16 @@ export class AuthService {
   ) {
     const hashedPassword = await this.hashPassword(password);
 
+    const referrer = await this.databaseService.user.findUnique({
+      where: {
+        referralCode: referral ?? '0000',
+      },
+    });
+
+    if (!referrer) {
+      throw new BadRequestException('Invalid Referral ID');
+    }
+
     const ref_code = generate({
       pattern: '####',
       charset: charset(Charset.ALPHANUMERIC),
@@ -76,16 +86,6 @@ export class AuthService {
       username: username ?? '',
       referralCode: ref_code,
     });
-
-    const referrer = await this.databaseService.user.findUnique({
-      where: {
-        referralCode: referral ?? '0000',
-      },
-    });
-
-    if (!referrer) {
-      throw new BadRequestException('Invalid Referral ID');
-    }
 
     // Process Winnings asynchronusly
     const userRegisteredEvent = new UserRegisteredEvent();

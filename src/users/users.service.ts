@@ -30,12 +30,12 @@ export class UsersService {
       if (e instanceof PrismaClientKnownRequestError) {
         const constraint = e.meta.target; // Extract the constraint name
 
-        if (constraint === 'user_email_key') {
+        if (constraint[0] === 'email') {
           throw new HttpException(
             'Email is already taken',
             HttpStatus.CONFLICT,
           );
-        } else if (constraint === 'user_username_key') {
+        } else if (constraint[0] === 'username') {
           throw new HttpException(
             'Username is already taken',
             HttpStatus.CONFLICT,
