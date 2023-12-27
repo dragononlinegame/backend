@@ -40,6 +40,6 @@ export class UserRegisteredListener {
     console.log(payload.userId);
     console.log(payload.referrerId);
 
-    await this.generateTeamConfig(payload.userId, payload.referrerId, 0);
+    await this.generateTeamConfig(payload.userId, payload.referrerId, 1);
   }
 }
