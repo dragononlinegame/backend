@@ -11,5 +11,6 @@ export class SignUpDto {
   username: string;
 
   @IsOptional()
+  @IsNotEmpty({ message: 'Referral should not be empty when provided' })
   referral: string;
 }

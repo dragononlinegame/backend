@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -78,6 +82,10 @@ export class AuthService {
         referralCode: referral ?? '0000',
       },
     });
+
+    if (!referrer) {
+      throw new BadRequestException('Invalid Referral ID');
+    }
 
     // Process Winnings asynchronusly
     const userRegisteredEvent = new UserRegisteredEvent();
