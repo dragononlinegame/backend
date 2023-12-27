@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
@@ -10,6 +11,7 @@ import { charset, Charset, generate } from 'referral-codes';
 import { DatabaseService } from 'src/database/database.service';
 import { UserRegisteredEvent } from './events/userRegisteredEvent';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -33,7 +35,7 @@ export class AuthService {
     return await bcrypt.compare(plainTextPassword, hashedPassword);
   }
 
-  async signin(email: string, password: string) {
+  async signin(email: string, password: string, @Res() response: Response) {
     const { data: user } = await this.usersService.findOneByEmail(email);
 
     if (!(await bcrypt.compare(password, user.password))) {
@@ -46,10 +48,18 @@ export class AuthService {
       username: user.username,
     };
 
+    const access_token = await this.jwtService.signAsync(payload);
+
+    response.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+
     return {
       success: true,
       data: {
-        access_token: await this.jwtService.signAsync(payload),
+        access_token,
       },
     };
   }
@@ -99,10 +109,12 @@ export class AuthService {
       username: user.username,
     };
 
+    const access_token = await this.jwtService.signAsync(payload);
+
     return {
       success: true,
       data: {
-        access_token: await this.jwtService.signAsync(payload),
+        access_token,
       },
     };
   }
