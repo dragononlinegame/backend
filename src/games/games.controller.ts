@@ -23,7 +23,7 @@ export class GamesController {
 
   @Get()
   findAll(
-    @Query('type') type: string = '0',
+    @Query('type') type: string = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
@@ -60,18 +60,18 @@ export class GamesController {
     return this.gamesService.remove(id);
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  issueNewGameT1() {
-    return this.gamesService.issueNewGame();
-  }
+  // @Cron(CronExpression.EVERY_MINUTE)
+  // issueNewGameT1() {
+  //   return this.gamesService.issueNewGame();
+  // }
 
-  @Cron('*/3 * * * *')
-  issueNewGameT2() {
-    return this.gamesService.issueNewGame(1);
-  }
+  // @Cron('*/3 * * * *')
+  // issueNewGameT2() {
+  //   return this.gamesService.issueNewGame(1);
+  // }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  issueNewGameT3() {
-    return this.gamesService.issueNewGame(2);
-  }
+  // @Cron(CronExpression.EVERY_5_MINUTES)
+  // issueNewGameT3() {
+  //   return this.gamesService.issueNewGame(2);
+  // }
 }

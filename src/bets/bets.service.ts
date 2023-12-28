@@ -2,6 +2,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { CreateBetDto } from './dto/create-bet.dto';
 import { DatabaseService } from 'src/database/database.service';
+import { BetEvent } from './events/betEvent';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class BetsService {
@@ -23,7 +25,10 @@ export class BetsService {
     '9',
   ];
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly eventEmitter: EventEmitter2,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   async create(userid: number, createBetDto: CreateBetDto) {
     const game = await this.databaseService.game.findFirst({
@@ -91,6 +96,12 @@ export class BetsService {
         },
       });
     });
+
+    // generate commissions asynchronusly
+    const betCreateEvent = new BetEvent();
+    betCreateEvent.userId = userid;
+    betCreateEvent.betAmount = createBetDto.amount;
+    this.eventEmitter.emit('bet.created', betCreateEvent);
 
     return {
       success: true,

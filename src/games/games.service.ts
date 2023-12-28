@@ -196,23 +196,23 @@ export class GamesService {
   }
 
   async findAll(type: string, limit: string, skip: string) {
-    const parsedType = parseInt(type);
+    const parsedType = type ? parseInt(type) : undefined;
     const parsedLimit = parseInt(limit);
     const parsedSkip = parseInt(skip);
 
-    if (isNaN(parsedType) || isNaN(parsedLimit) || isNaN(parsedSkip)) {
+    if (isNaN(parsedLimit) || isNaN(parsedSkip)) {
       throw new BadRequestException('Invalid params.');
     }
 
-    const cacheKey = `${cached_keys.CACHED_RECENT_GAMES}_${parsedType}`;
+    // const cacheKey = `${cached_keys.CACHED_RECENT_GAMES}_${parsedType}`;
 
-    const isFirstPage = parsedLimit === 10 && parsedSkip === 0;
-    if (isFirstPage) {
-      const cached_recents = await this.cacheManager.get(cacheKey);
-      if (cached_recents) {
-        return { success: true, data: cached_recents, cachehit: true };
-      }
-    }
+    // const isFirstPage = parsedLimit === 10 && parsedSkip === 0;
+    // if (isFirstPage) {
+    //   const cached_recents = await this.cacheManager.get(cacheKey);
+    //   if (cached_recents) {
+    //     return { success: true, data: cached_recents, cachehit: true };
+    //   }
+    // }
 
     const games = await this.databaseService.game.findMany({
       where: {
@@ -233,6 +233,16 @@ export class GamesService {
         started_at: true,
         ended_at: true,
         result: true,
+        bets: {
+          select: {
+            id: true,
+          },
+        },
+        wins: {
+          select: {
+            id: true,
+          },
+        },
       },
       take: parsedLimit,
       skip: parsedSkip,
@@ -249,7 +259,9 @@ export class GamesService {
       },
     });
 
-    await this.cacheManager.set(cacheKey, { games, total }, 0);
+    // if (type) {
+    //   await this.cacheManager.set(cacheKey, { games, total }, 0);
+    // }
 
     return {
       success: true,
@@ -288,12 +300,12 @@ export class GamesService {
       );
     }
 
-    const cacheKey = `${cached_keys.CACHED_CURRENT_GAME}_${parsedType}`;
+    // const cacheKey = `${cached_keys.CACHED_CURRENT_GAME}_${parsedType}`;
 
-    const cached_current = await this.cacheManager.get(cacheKey);
-    if (cached_current) {
-      return { success: true, data: cached_current, cachehit: true };
-    }
+    // const cached_current = await this.cacheManager.get(cacheKey);
+    // if (cached_current) {
+    //   return { success: true, data: cached_current, cachehit: true };
+    // }
 
     const game = await this.databaseService.game.findFirst({
       where: {
@@ -314,7 +326,7 @@ export class GamesService {
 
     if (!game) throw new NotFoundException('Can not find New Issued Game.');
 
-    await this.cacheManager.set(cacheKey, game, 0);
+    // await this.cacheManager.set(cacheKey, game, 0);
 
     return { success: true, data: game };
   }

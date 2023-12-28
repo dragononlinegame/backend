@@ -25,12 +25,17 @@ enum status {
 enum userStatus {
   Active
   Inactive
-  Suspended
 }
 
 enum transactionType {
   Credit
   Debit
+}
+
+enum commission_type {
+  LevelIncome
+  DailyIncome
+  SponsorIncome
 }
 
 model user {
@@ -43,6 +48,8 @@ model user {
 
   status userStatus @default(Active)
   role   roles      @default(User)
+
+  isBanned Boolean @default(false)
 
   createdAt DateTime @default(now())
 
@@ -81,6 +88,20 @@ model transaction {
 
   walletId Int
   wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model commission {
+  id     Int             @id @default(autoincrement())
+  amount Decimal         @default(0.00) @db.Decimal(10, 2)
+  fromId Int
+  toId   Int
+  level  Int
+  type   commission_type @default(LevelIncome)
+
+  isPaid   Boolean  @default(false)
+  createAt DateTime @default(now())
+
+  @@index([fromId])
 }
 
 model game {

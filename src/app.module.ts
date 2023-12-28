@@ -11,6 +11,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { DatabaseModule } from './database/database.module';
 import { WalletModule } from './wallet/wallet.module';
 import { UsersModule } from './users/users.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module';
     WalletModule,
     GamesModule,
     BetsModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

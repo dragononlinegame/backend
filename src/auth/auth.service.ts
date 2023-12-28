@@ -56,12 +56,12 @@ export class AuthService {
       sameSite: 'none',
     });
 
-    return {
+    return response.json({
       success: true,
       data: {
         access_token,
       },
-    };
+    });
   }
 
   async register(

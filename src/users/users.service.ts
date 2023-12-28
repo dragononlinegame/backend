@@ -52,14 +52,19 @@ export class UsersService {
 
   async findAll(limit: string, skip: string) {
     const users = await this.databaseService.user.findMany({
+      where: {
+        role: 'User',
+      },
       take: parseInt(limit),
       skip: parseInt(skip),
       select: {
         id: true,
         email: true,
         username: true,
+        referralCode: true,
         role: true,
         status: true,
+        isBanned: true,
         createdAt: true,
       },
     });
@@ -84,8 +89,10 @@ export class UsersService {
         id: true,
         email: true,
         username: true,
+        referralCode: true,
         role: true,
         status: true,
+        isBanned: true,
         createdAt: true,
       },
     });
@@ -106,8 +113,10 @@ export class UsersService {
         email: true,
         username: true,
         password: true,
+        referralCode: true,
         role: true,
         status: true,
+        isBanned: true,
         createdAt: true,
       },
     });
@@ -130,6 +139,7 @@ export class UsersService {
         username: true,
         role: true,
         status: true,
+        isBanned: true,
         createdAt: true,
       },
     });
