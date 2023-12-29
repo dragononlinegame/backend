@@ -79,7 +79,7 @@ export class AuthService {
     });
 
     if (!referrer) {
-      throw new BadRequestException('Invalid Referral ID');
+      throw new BadRequestException('Invalid Referral Code');
     }
 
     const ref_code = generate({
