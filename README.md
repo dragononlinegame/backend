@@ -38,6 +38,12 @@ $ npm run start:prod
   - PATCH /users/:id
   - DELETE /users/:id
 
+  [Wallet]
+  { Protected }
+  - GET /wallet
+  - GET /wallet/transactions
+  - GET /wallet/recharge
+
   [Games]
   - GET /games
   - GET /games/current
@@ -51,4 +57,10 @@ $ npm run start:prod
   - POST /bets
   - GET /bets [if user only return bets of themselves else for admin return all]
   - GET /bets/:id
+
+  [Analytics]
+  { Protected :: ADMIN_ONLY }
+  - GET /analytics/activity
+  - GET /analytics/users
+  - GET /analytics/earnings
 ```

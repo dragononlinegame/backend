@@ -15,7 +15,6 @@ import { GamesService } from './games.service';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { roles } from '@prisma/client';
-import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Controller('games')
 export class GamesController {
@@ -58,20 +57,5 @@ export class GamesController {
   remove(@Request() req, @Param('id', ParseIntPipe) id: number) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
     return this.gamesService.remove(id);
-  }
-
-  @Cron(CronExpression.EVERY_MINUTE)
-  issueNewGameT1() {
-    return this.gamesService.issueNewGame();
-  }
-
-  @Cron('*/3 * * * *')
-  issueNewGameT2() {
-    return this.gamesService.issueNewGame(1);
-  }
-
-  @Cron(CronExpression.EVERY_5_MINUTES)
-  issueNewGameT3() {
-    return this.gamesService.issueNewGame(2);
   }
 }
