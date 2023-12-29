@@ -14,11 +14,18 @@ import {
 import { UsersService } from './users.service';
 import { Prisma, roles } from '@prisma/client';
 import { AuthGuard } from 'src/auth/auth.guard';
+import * as bcrypt from 'bcrypt';
 
 @UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    return hashedPassword;
+  }
 
   @Get()
   findAll(
@@ -33,6 +40,30 @@ export class UsersController {
   @Get('profile')
   profile(@Request() req) {
     return this.usersService.findOneById(req.user.id);
+  }
+
+  @Patch('profile/uname')
+  changeUsername(
+    @Request() req,
+    @Body() userUpdateInput: Prisma.userUpdateInput,
+  ) {
+    return this.usersService.update(req.user.id, {
+      username: userUpdateInput.username,
+    });
+  }
+
+  @Patch('profile/pwd')
+  async changePassword(
+    @Request() req,
+    @Body() userUpdateInput: Prisma.userUpdateInput,
+  ) {
+    const hashedPassword = await this.hashPassword(
+      userUpdateInput.password as string,
+    );
+
+    return this.usersService.update(req.user.id, {
+      password: hashedPassword,
+    });
   }
 
   @Get(':id')

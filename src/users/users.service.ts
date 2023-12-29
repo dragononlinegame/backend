@@ -128,23 +128,41 @@ export class UsersService {
   }
 
   async update(id: number, updateUserInput: Prisma.userUpdateInput) {
-    const updatedUser = await this.databaseService.user.update({
-      where: {
-        id,
-      },
-      data: updateUserInput,
-      select: {
-        id: true,
-        email: true,
-        username: true,
-        role: true,
-        status: true,
-        isBanned: true,
-        createdAt: true,
-      },
-    });
+    try {
+      const updatedUser = await this.databaseService.user.update({
+        where: {
+          id,
+        },
+        data: updateUserInput,
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          role: true,
+          status: true,
+          isBanned: true,
+          createdAt: true,
+        },
+      });
 
-    return { success: true, data: updatedUser };
+      return { success: true, data: updatedUser };
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError) {
+        const constraint = e.meta.target; // Extract the constraint name
+
+        if (constraint[0] === 'username') {
+          throw new HttpException(
+            'Username is already taken',
+            HttpStatus.CONFLICT,
+          );
+        }
+      }
+
+      throw new HttpException(
+        'Something went wrong',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   async remove(id: number) {
