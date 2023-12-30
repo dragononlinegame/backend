@@ -331,6 +331,71 @@ export class GamesService {
     return { success: true, data: game };
   }
 
+  async findWins(type: string, limit: string, skip: string) {
+    const parsedType = type ? parseInt(type) : undefined;
+    const parsedLimit = parseInt(limit);
+    const parsedSkip = parseInt(skip);
+
+    const wins = await this.databaseService.win.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      where: {
+        game: {
+          type: parsedType,
+        },
+      },
+      include: {
+        bet: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+      take: parsedLimit,
+      skip: parsedSkip,
+    });
+
+    const total = await this.databaseService.win.findMany({
+      where: {
+        game: {
+          type: parsedType,
+        },
+      },
+    });
+
+    return { success: true, data: { wins, total } };
+  }
+
+  async findWinsByGameId(id: number, limit: string, skip: string) {
+    const parsedLimit = parseInt(limit);
+    const parsedSkip = parseInt(skip);
+
+    const wins = await this.databaseService.win.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      where: {
+        gameId: id,
+      },
+      take: parsedLimit,
+      skip: parsedSkip,
+    });
+
+    const total = await this.databaseService.win.findMany({
+      where: {
+        gameId: id,
+      },
+    });
+
+    return { success: true, data: { wins, total } };
+  }
+
   async update(id: number, updateGameDto: UpdateGameDto) {
     const game = await this.databaseService.game.update({
       where: {

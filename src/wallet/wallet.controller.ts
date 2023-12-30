@@ -37,4 +37,12 @@ export class WalletController {
   topUpwallet(@Request() req, @Body() body) {
     return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
   }
+
+  @Post('withdraw')
+  initiateWithdrawal(@Request() req, @Body() body) {
+    return this.walletService.initiateWithdrawalRequest(
+      req.user.id,
+      body.amount,
+    );
+  }
 }

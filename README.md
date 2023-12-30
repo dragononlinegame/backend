@@ -49,6 +49,8 @@ $ npm run start:prod
   - GET /games/current
   {Protected}
   - GET /games/:id
+  - GET /games/:id/wins
+  - GET /games/wins
   - PATCH /games/:id
   - DELETE /games/:id
 

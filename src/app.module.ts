@@ -12,9 +12,14 @@ import { WalletModule } from './wallet/wallet.module';
 import { UsersModule } from './users/users.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CronModule } from './cron/cron.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'client', 'build'),
+    }),
     CacheModule.register({
       isGlobal: true,
     }),

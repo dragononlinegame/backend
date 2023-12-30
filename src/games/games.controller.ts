@@ -35,10 +35,34 @@ export class GamesController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('wins')
+  findWins(
+    @Request() req,
+    @Query('type') type: string = undefined,
+    @Query('limit') limit: string = '10',
+    @Query('skip') skip: string = '0',
+  ) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.gamesService.findWins(type, limit, skip);
+  }
+
+  @UseGuards(AuthGuard)
   @Get(':id')
   findOne(@Request() req, @Param('id', ParseIntPipe) id: number) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
     return this.gamesService.findOne(id);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':id/wins')
+  findWinsByGameId(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('limit') limit: string = '10',
+    @Query('skip') skip: string = '0',
+  ) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.gamesService.findWinsByGameId(id, limit, skip);
   }
 
   @UseGuards(AuthGuard)

@@ -75,6 +75,8 @@ model wallet {
 
   user         user          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions transaction[]
+  deposits     deposit[]
+  withdrawals  withdrawal[]
 }
 
 model transaction {
@@ -85,6 +87,30 @@ model transaction {
   type        transactionType @default(Debit)
   status      status          @default(Completed)
   description String?
+
+  walletId Int
+  wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model deposit {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  amount Decimal
+  method String
+  status status  @default(Completed)
+
+  walletId Int
+  wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+}
+
+model withdrawal {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  amount Decimal
+  method String
+  status status  @default(Completed)
 
   walletId Int
   wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)

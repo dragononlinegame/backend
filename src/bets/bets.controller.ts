@@ -28,7 +28,7 @@ export class BetsController {
   @Get()
   findAll(
     @Request() req,
-    @Query('type') type: string = '0',
+    @Query('type') type: string = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {

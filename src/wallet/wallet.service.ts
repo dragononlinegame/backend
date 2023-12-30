@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
@@ -33,6 +33,12 @@ export class WalletService {
             amount: amount,
             type: 'Credit',
             description: 'TopUp',
+          },
+        },
+        deposits: {
+          create: {
+            amount: amount,
+            method: 'UPI',
           },
         },
       },
@@ -73,6 +79,37 @@ export class WalletService {
       success: true,
       data: 'success',
     };
+  }
+
+  async initiateWithdrawalRequest(userid: number, amount: number) {
+    await this.databaseService.$transaction(async (txn) => {
+      const wallet = await txn.wallet.update({
+        where: {
+          userId: userid,
+        },
+        data: {
+          balance: {
+            decrement: amount,
+          },
+          transactions: {
+            create: {
+              amount: amount,
+              type: 'Credit',
+              description: 'TopUp',
+            },
+          },
+          deposits: {
+            create: {
+              amount: amount,
+              method: 'UPI',
+            },
+          },
+        },
+      });
+
+      if (Number(wallet.balance) < 0)
+        throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
+    });
   }
 
   async findTransactionsByUserId(

@@ -110,13 +110,21 @@ export class BetsService {
   }
 
   async findAll(type: string, limit: string, skip: string) {
+    const parsedType = type ? parseInt(type) : undefined;
+
     const bets = await this.databaseService.bet.findMany({
       where: {
         game: {
-          type: parseInt(type),
+          type: parsedType,
         },
       },
       include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         game: {
           select: {
             serial: true,
@@ -143,7 +151,7 @@ export class BetsService {
     const total = await this.databaseService.bet.count({
       where: {
         game: {
-          type: parseInt(type),
+          type: parsedType,
         },
       },
     });
@@ -163,11 +171,13 @@ export class BetsService {
     limit: string,
     skip: string,
   ) {
+    const parsedType = type ? parseInt(type) : 0;
+
     const bets = await this.databaseService.bet.findMany({
       where: {
         userId: userid,
         game: {
-          type: parseInt(type),
+          type: parsedType,
         },
       },
       include: {
@@ -197,7 +207,7 @@ export class BetsService {
     const total = await this.databaseService.bet.count({
       where: {
         game: {
-          type: parseInt(type),
+          type: parsedType,
         },
       },
     });
