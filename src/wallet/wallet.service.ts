@@ -142,4 +142,35 @@ export class WalletService {
 
     return { success: true, data: { transactions, total } };
   }
+
+  async findDepositsByUserId(
+    userid: number,
+    limit: string = '10',
+    skip: string = '0',
+  ) {
+    const wallet = await this.databaseService.wallet.findFirst({
+      where: {
+        userId: userid,
+      },
+    });
+
+    const deposits = await this.databaseService.deposit.findMany({
+      where: {
+        walletId: wallet.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: parseInt(limit),
+      skip: parseInt(skip),
+    });
+
+    const total = await this.databaseService.deposit.count({
+      where: {
+        walletId: wallet.id,
+      },
+    });
+
+    return { success: true, data: { deposits, total } };
+  }
 }

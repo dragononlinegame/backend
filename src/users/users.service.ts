@@ -69,7 +69,11 @@ export class UsersService {
       },
     });
 
-    const total = await this.databaseService.user.count();
+    const total = await this.databaseService.user.count({
+      where: {
+        role: 'User',
+      },
+    });
 
     return {
       success: true,

@@ -348,6 +348,7 @@ export class GamesService {
       include: {
         bet: {
           select: {
+            amount: true,
             user: {
               select: {
                 id: true,
@@ -361,7 +362,7 @@ export class GamesService {
       skip: parsedSkip,
     });
 
-    const total = await this.databaseService.win.findMany({
+    const total = await this.databaseService.win.count({
       where: {
         game: {
           type: parsedType,

@@ -33,6 +33,15 @@ export class WalletController {
     );
   }
 
+  @Get('deposits')
+  deposits(
+    @Request() req,
+    @Query('limit') limit: string = '10',
+    @Query('skip') skip: string = '0',
+  ) {
+    return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
+  }
+
   @Post('recharge')
   topUpwallet(@Request() req, @Body() body) {
     return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
