@@ -15,6 +15,19 @@ import { AuthGuard } from 'src/auth/auth.guard';
 export class WalletController {
   constructor(private readonly walletService: WalletService) {}
 
+  @Post('recharge')
+  topUpwallet(@Request() req, @Body() body) {
+    return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
+  }
+
+  @Post('withdraw')
+  initiateWithdrawal(@Request() req, @Body() body) {
+    return this.walletService.initiateWithdrawalRequest(
+      req.user.id,
+      body.amount,
+    );
+  }
+
   @Get()
   wallet(@Request() req) {
     return this.walletService.getWalletByUserId(req.user.id);
@@ -42,16 +55,12 @@ export class WalletController {
     return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
   }
 
-  @Post('recharge')
-  topUpwallet(@Request() req, @Body() body) {
-    return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
-  }
-
-  @Post('withdraw')
-  initiateWithdrawal(@Request() req, @Body() body) {
-    return this.walletService.initiateWithdrawalRequest(
-      req.user.id,
-      body.amount,
-    );
+  @Get('withdrawals')
+  withdrawals(
+    @Request() req,
+    @Query('limit') limit: string = '10',
+    @Query('skip') skip: string = '0',
+  ) {
+    return this.walletService.findWithdrawalsByUserId(req.user.id, limit, skip);
   }
 }

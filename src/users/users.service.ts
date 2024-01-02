@@ -30,9 +30,14 @@ export class UsersService {
       if (e instanceof PrismaClientKnownRequestError) {
         const constraint = e.meta.target; // Extract the constraint name
 
-        if (constraint[0] === 'email') {
+        if (constraint[0] === 'phone') {
           throw new HttpException(
-            'Email is already taken',
+            'Phone is already in use.',
+            HttpStatus.CONFLICT,
+          );
+        } else if (constraint[0] === 'email') {
+          throw new HttpException(
+            'Email is already in use.',
             HttpStatus.CONFLICT,
           );
         } else if (constraint[0] === 'username') {
@@ -59,6 +64,7 @@ export class UsersService {
       skip: parseInt(skip),
       select: {
         id: true,
+        phone: true,
         email: true,
         username: true,
         referralCode: true,
@@ -91,6 +97,7 @@ export class UsersService {
       },
       select: {
         id: true,
+        phone: true,
         email: true,
         username: true,
         referralCode: true,
@@ -107,6 +114,31 @@ export class UsersService {
     return { success: true, data: user };
   }
 
+  async findOneByPhone(phone: string) {
+    const user = await this.databaseService.user.findFirst({
+      where: {
+        phone,
+      },
+      select: {
+        id: true,
+        phone: true,
+        email: true,
+        username: true,
+        password: true,
+        referralCode: true,
+        role: true,
+        status: true,
+        isBanned: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user)
+      throw new NotFoundException(`Can not find user with phone ${phone}`);
+
+    return { success: true, data: user };
+  }
+
   async findOneByEmail(email: string) {
     const user = await this.databaseService.user.findFirst({
       where: {
@@ -114,6 +146,7 @@ export class UsersService {
       },
       select: {
         id: true,
+        phone: true,
         email: true,
         username: true,
         password: true,
@@ -140,6 +173,7 @@ export class UsersService {
         data: updateUserInput,
         select: {
           id: true,
+          phone: true,
           email: true,
           username: true,
           role: true,

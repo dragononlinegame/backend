@@ -14,6 +14,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { CronModule } from './cron/cron.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ActivityService } from './activity/activity.service';
+import { ActivityController } from './activity/activity.controller';
 
 @Module({
   imports: [
@@ -40,7 +42,7 @@ import { join } from 'path';
     BetsModule,
     AnalyticsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, ActivityController],
+  providers: [AppService, ActivityService],
 })
 export class AppModule {}

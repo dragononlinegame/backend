@@ -39,10 +39,11 @@ enum commission_type {
 }
 
 model user {
-  id       Int    @id @default(autoincrement())
-  email    String @unique
+  id       Int     @id @default(autoincrement())
+  phone    String  @unique
+  email    String? @unique
+  username String  @unique
   password String
-  username String @unique
 
   referralCode String @unique
 
@@ -177,4 +178,23 @@ model win {
 
   gameId Int
   game   game @relation(fields: [gameId], references: [id])
+}
+
+model notification {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  isActive    Boolean @default(false)
+  name        String
+  description String
+}
+
+model event {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  name        String
+  description String?
+  image_url   String
+  isActive    Boolean @default(false)
 }

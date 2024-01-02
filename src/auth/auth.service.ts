@@ -35,8 +35,8 @@ export class AuthService {
     return await bcrypt.compare(plainTextPassword, hashedPassword);
   }
 
-  async signin(email: string, password: string, @Res() response: Response) {
-    const { data: user } = await this.usersService.findOneByEmail(email);
+  async signin(phone: string, password: string, @Res() response: Response) {
+    const { data: user } = await this.usersService.findOneByPhone(phone);
 
     if (!(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('invalid credentials');
@@ -44,7 +44,7 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
-      email: user.email,
+      phone: user.phone,
       username: user.username,
     };
 
@@ -65,7 +65,7 @@ export class AuthService {
   }
 
   async register(
-    email: string,
+    phone: string,
     password: string,
     username: string,
     referral: string,
@@ -91,7 +91,7 @@ export class AuthService {
     })[0];
 
     const { data: user } = await this.usersService.create({
-      email: email,
+      phone: phone,
       password: hashedPassword,
       username: username ?? '',
       referralCode: ref_code,

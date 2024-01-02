@@ -13,6 +13,7 @@ import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { cached_keys } from 'src/constants/cache-keys';
 import { DatabaseService } from 'src/database/database.service';
+import { format, isSameDay, parse } from 'date-fns';
 
 @Injectable()
 export class GamesService {
@@ -429,6 +430,8 @@ export class GamesService {
       );
     }
 
+    const currentDate = format(new Date(), 'yyyyMMdd');
+
     const lastGameWithNullResult = await this.databaseService.game.findFirst({
       where: {
         type: type,
@@ -465,10 +468,28 @@ export class GamesService {
         `emitted result.announced with gameID : ${lastGameWithNullResult.id}`,
       );
 
+      let newSerialNumber: number;
+
+      const lastSerialDate = lastGameWithNullResult.serial
+        .toString()
+        .substring(0, 8);
+
+      if (
+        isSameDay(new Date(), parse(lastSerialDate, 'yyyyMMdd', new Date()))
+      ) {
+        const lastSerialNumeric = parseInt(
+          lastGameWithNullResult.serial.toString().substring(8),
+          10,
+        );
+        newSerialNumber = parseInt(`${currentDate}${lastSerialNumeric + 1}`);
+      } else {
+        newSerialNumber = parseInt(`${currentDate}1`);
+      }
+
       // Issue New Game
       const new_game = await this.create({
         type: type,
-        serial: lastGameWithNullResult.serial + 1,
+        serial: newSerialNumber,
       });
 
       await this.cacheManager.del(`${cached_keys.CACHED_CURRENT_GAME}_${type}`);
@@ -492,10 +513,26 @@ export class GamesService {
       });
 
       if (last_game) {
+        let newSerialNumber: number;
+
+        const lastSerialDate = last_game.serial.toString().substring(0, 8);
+
+        if (
+          isSameDay(new Date(), parse(lastSerialDate, 'yyyyMMdd', new Date()))
+        ) {
+          const lastSerialNumeric = parseInt(
+            last_game.serial.toString().substring(8),
+            10,
+          );
+          newSerialNumber = parseInt(`${currentDate}${lastSerialNumeric + 1}`);
+        } else {
+          newSerialNumber = parseInt(`${currentDate}1`);
+        }
+
         // Issue New Game
         const new_game = await this.create({
           type: type,
-          serial: last_game.serial + 1,
+          serial: newSerialNumber,
         });
 
         await this.cacheManager.del(
@@ -507,10 +544,11 @@ export class GamesService {
 
         return new_game;
       } else {
+        const newSerialNumber = parseInt(`${currentDate}1`);
         // Issue New Game
         const new_game = await this.create({
           type: type,
-          serial: 1,
+          serial: newSerialNumber,
         });
 
         await this.cacheManager.del(

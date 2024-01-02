@@ -94,8 +94,8 @@ export class WalletService {
           transactions: {
             create: {
               amount: amount,
-              type: 'Credit',
-              description: 'TopUp',
+              type: 'Debit',
+              description: 'Withdrawal',
             },
           },
           deposits: {
@@ -172,5 +172,36 @@ export class WalletService {
     });
 
     return { success: true, data: { deposits, total } };
+  }
+
+  async findWithdrawalsByUserId(
+    userid: number,
+    limit: string = '10',
+    skip: string = '0',
+  ) {
+    const wallet = await this.databaseService.wallet.findFirst({
+      where: {
+        userId: userid,
+      },
+    });
+
+    const withdrawals = await this.databaseService.withdrawal.findMany({
+      where: {
+        walletId: wallet.id,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: parseInt(limit),
+      skip: parseInt(skip),
+    });
+
+    const total = await this.databaseService.withdrawal.count({
+      where: {
+        walletId: wallet.id,
+      },
+    });
+
+    return { success: true, data: { withdrawals, total } };
   }
 }
