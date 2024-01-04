@@ -56,6 +56,7 @@ model user {
 
   wallet wallet?
   bets   bet[]
+  upline teamConfig[]
 }
 
 model teamConfig {
@@ -63,6 +64,8 @@ model teamConfig {
   uplineId  Int
   level     Int
   createdAt DateTime @default(now())
+
+  user user @relation(fields: [userId], references: [id])
 
   @@unique([userId, uplineId])
   @@index([uplineId])
@@ -97,9 +100,10 @@ model deposit {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  amount Decimal
-  method String
-  status status  @default(Completed)
+  reference String  @unique
+  amount    Decimal
+  method    String
+  status    status  @default(Completed)
 
   walletId Int
   wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
@@ -109,9 +113,10 @@ model withdrawal {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  amount Decimal
-  method String
-  status status  @default(Completed)
+  reference String  @unique
+  amount    Decimal
+  method    String
+  status    status  @default(Completed)
 
   walletId Int
   wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
@@ -132,8 +137,8 @@ model commission {
 }
 
 model game {
-  id     Int @id @default(autoincrement())
-  serial Int
+  id     Int    @id @default(autoincrement())
+  serial String
   type   Int
 
   started_at DateTime

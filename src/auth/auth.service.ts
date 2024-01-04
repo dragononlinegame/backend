@@ -83,7 +83,7 @@ export class AuthService {
     }
 
     const ref_code = generate({
-      pattern: '####',
+      pattern: '######',
       charset: charset(Charset.ALPHANUMERIC),
       prefix: '',
       postfix: '',

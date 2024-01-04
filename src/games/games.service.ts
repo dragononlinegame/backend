@@ -183,7 +183,7 @@ export class GamesService {
       const new_game = await this.databaseService.game.create({
         data: {
           type: createGameDto.type,
-          serial: createGameDto.serial,
+          serial: createGameDto.serial.toString(),
           started_at: startTime,
           ended_at: endTime,
         },
@@ -470,15 +470,13 @@ export class GamesService {
 
       let newSerialNumber: number;
 
-      const lastSerialDate = lastGameWithNullResult.serial
-        .toString()
-        .substring(0, 8);
+      const lastSerialDate = lastGameWithNullResult.serial.substring(0, 8);
 
       if (
         isSameDay(new Date(), parse(lastSerialDate, 'yyyyMMdd', new Date()))
       ) {
         const lastSerialNumeric = parseInt(
-          lastGameWithNullResult.serial.toString().substring(8),
+          lastGameWithNullResult.serial.substring(8),
           10,
         );
         newSerialNumber = parseInt(`${currentDate}${lastSerialNumeric + 1}`);
@@ -515,15 +513,12 @@ export class GamesService {
       if (last_game) {
         let newSerialNumber: number;
 
-        const lastSerialDate = last_game.serial.toString().substring(0, 8);
+        const lastSerialDate = last_game.serial.substring(0, 8);
 
         if (
           isSameDay(new Date(), parse(lastSerialDate, 'yyyyMMdd', new Date()))
         ) {
-          const lastSerialNumeric = parseInt(
-            last_game.serial.toString().substring(8),
-            10,
-          );
+          const lastSerialNumeric = parseInt(last_game.serial.substring(8), 10);
           newSerialNumber = parseInt(`${currentDate}${lastSerialNumeric + 1}`);
         } else {
           newSerialNumber = parseInt(`${currentDate}1`);

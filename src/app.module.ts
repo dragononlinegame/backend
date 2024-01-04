@@ -16,6 +16,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { ActivityService } from './activity/activity.service';
 import { ActivityController } from './activity/activity.controller';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { ActivityController } from './activity/activity.controller';
     GamesModule,
     BetsModule,
     AnalyticsModule,
+    TeamModule,
   ],
   controllers: [AppController, ActivityController],
   providers: [AppService, ActivityService],

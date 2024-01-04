@@ -1,5 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { nanoid } from 'nanoid';
 
 @Injectable()
 export class WalletService {
@@ -37,6 +38,7 @@ export class WalletService {
         },
         deposits: {
           create: {
+            reference: nanoid(12),
             amount: amount,
             method: 'UPI',
           },
@@ -98,8 +100,9 @@ export class WalletService {
               description: 'Withdrawal',
             },
           },
-          deposits: {
+          withdrawals: {
             create: {
+              reference: nanoid(12),
               amount: amount,
               method: 'UPI',
             },
@@ -110,6 +113,8 @@ export class WalletService {
       if (Number(wallet.balance) < 0)
         throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
     });
+
+    return { success: true, data: 'success' };
   }
 
   async findTransactionsByUserId(

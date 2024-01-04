@@ -30,6 +30,7 @@ export class CronJobService {
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async sendCommissions() {
     const commissions = await this.databaseService.commission.groupBy({
       by: ['toId'],

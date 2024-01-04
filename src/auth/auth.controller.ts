@@ -12,7 +12,7 @@ export class AuthController {
   @Post('signin')
   signIn(@Body() signInDto: SignInDto, @Res() response: Response) {
     return this.authService.signin(
-      signInDto.email,
+      signInDto.phone,
       signInDto.password,
       response,
     );
@@ -34,7 +34,7 @@ export class AuthController {
   @Post('register')
   signUp(@Body() signUpDto: SignUpDto) {
     return this.authService.register(
-      signUpDto.email,
+      signUpDto.phone,
       signUpDto.password,
       signUpDto.username,
       signUpDto.referral,

@@ -171,7 +171,7 @@ export class BetsService {
     limit: string,
     skip: string,
   ) {
-    const parsedType = type ? parseInt(type) : 0;
+    const parsedType = type ? parseInt(type) : undefined;
 
     const bets = await this.databaseService.bet.findMany({
       where: {
