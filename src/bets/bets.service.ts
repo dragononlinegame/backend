@@ -87,12 +87,15 @@ export class BetsService {
       if (Number(wallet.balance) < 0)
         throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
 
+      const ServiceTexAmount =
+        createBetDto.amount * parseFloat(process.env.SERVICE_TEX);
+
       await txn.bet.create({
         data: {
           userId: userid,
           gameId: createBetDto.gameID,
           prediction: createBetDto.prediction,
-          amount: createBetDto.amount,
+          amount: createBetDto.amount - ServiceTexAmount,
         },
       });
     });

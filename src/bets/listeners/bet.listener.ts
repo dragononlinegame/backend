@@ -12,14 +12,11 @@ export class BetListener {
     2: 0.005,
     3: 0.003,
     4: 0.002,
-    5: 0.001,
+    5: 0.002,
   };
 
   @OnEvent('bet.created', { async: true })
   async handleResultAnnouncedEvent(payload: BetEvent) {
-    console.log(payload.userId);
-    console.log(payload.betAmount);
-
     const Commissions = [];
 
     for (let tier = 1; tier <= Object.keys(this.LevelIncome).length; tier++) {

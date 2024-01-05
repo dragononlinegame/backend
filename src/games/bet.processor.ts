@@ -1,12 +1,9 @@
 import { Process, Processor } from '@nestjs/bull';
-import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { DatabaseService } from 'src/database/database.service';
 
 @Processor('bet-processing')
 export class BetProcessor {
-  private readonly logger = new Logger(BetProcessor.name);
-
   constructor(private readonly databaseService: DatabaseService) {}
 
   @Process('processBet')
@@ -23,8 +20,6 @@ export class BetProcessor {
     const bet = job.data;
 
     try {
-      this.logger.debug(`Processing Bet with ID :: ${bet.id}`);
-
       const prediction = bet.prediction;
 
       let multiplier = parseFloat(process.env.DEFAULT_MULTIPLIER as string);
@@ -63,10 +58,7 @@ export class BetProcessor {
       });
 
       await this.databaseService.$transaction([update_wallet, create_win]);
-
-      this.logger.debug(`Bet ID :: ${bet.id} Processed`);
     } catch (error) {
-      this.logger.debug(`Failed to process Bet ID :: ${bet.id}`);
       throw error;
     }
   }
