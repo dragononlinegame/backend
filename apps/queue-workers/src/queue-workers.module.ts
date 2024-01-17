@@ -17,9 +17,6 @@ import { CommissionProcessor } from './commission.processor';
       name: 'bet-processing',
     }),
     BullModule.registerQueue({
-      name: 'bet-processing',
-    }),
-    BullModule.registerQueue({
       name: 'commission-processing',
     }),
     DatabaseModule,

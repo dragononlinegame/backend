@@ -5,7 +5,11 @@ import { ResultAnnouncedListener } from './listeners/result-announced.listener';
 import { BullModule } from '@nestjs/bull';
 
 @Module({
-  imports: [],
+  imports: [
+    BullModule.registerQueue({
+      name: 'bet-processing'
+    })
+  ],
   controllers: [GamesController],
   providers: [GamesService, ResultAnnouncedListener],
 })
