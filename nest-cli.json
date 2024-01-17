@@ -1,8 +1,32 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/prediction-backend/src",
   "compilerOptions": {
-    "deleteOutDir": true
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/prediction-backend/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/prediction-backend",
+  "projects": {
+    "prediction-backend": {
+      "type": "application",
+      "root": "apps/prediction-backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/prediction-backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/prediction-backend/tsconfig.app.json"
+      }
+    },
+    "queue-workers": {
+      "type": "application",
+      "root": "apps/queue-workers",
+      "entryFile": "main",
+      "sourceRoot": "apps/queue-workers/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/queue-workers/tsconfig.app.json"
+      }
+    }
   }
 }
