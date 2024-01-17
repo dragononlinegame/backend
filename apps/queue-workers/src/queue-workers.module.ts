@@ -13,6 +13,15 @@ import { CommissionProcessor } from './commission.processor';
         password: process.env.RADIS_PASS,
       },
     }),
+    BullModule.registerQueue({
+      name: 'bet-processing',
+    }),
+    BullModule.registerQueue({
+      name: 'bet-processing',
+    }),
+    BullModule.registerQueue({
+      name: 'commission-processing',
+    }),
     DatabaseModule,
   ],
   providers: [BetProcessor, CommissionProcessor]

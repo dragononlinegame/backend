@@ -7,9 +7,6 @@ import { BullModule } from '@nestjs/bull';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    BullModule.registerQueue({
-      name: 'commission-processing',
-    }),
   ],
   providers: [GamesService, CronJobService],
 })
