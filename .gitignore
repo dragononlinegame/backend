@@ -1,5 +1,6 @@
 # compiled output
-/dist
+/dist/apps/prediction-backend
+/dist/apps/queue-workers
 /node_modules
 
 # Logs
