@@ -34,7 +34,7 @@ import { TeamModule } from './team/team.module';
         password: process.env.RADIS_PASS,
       },
     }),
-    CronModule,
+    // CronModule,
     DatabaseModule,
     AuthModule,
     UsersModule,
