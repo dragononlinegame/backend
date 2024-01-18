@@ -30,4 +30,10 @@ export class AnalyticsController {
     if (req.user.role !== 'Admin') throw new UnauthorizedException();
     return this.analyticsService.getProfitDataForLast12Months();
   }
+
+  @Get('/transactions')
+  getWithdrawalsData(@Request() req) {
+    if(req.user.role !== 'Admin') throw new UnauthorizedException();
+    return this.analyticsService.getTransactionDataForLast2Months();
+  }
 }

@@ -209,4 +209,63 @@ export class WalletService {
 
     return { success: true, data: { withdrawals, total } };
   }
+
+  async findDeposits(
+    limit: string = '10',
+    skip: string = '0',
+  ) {
+
+    const deposits = await this.databaseService.deposit.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        wallet: {
+          select: {
+            user: {
+              select: {
+                username: true,
+              }
+            }
+          }
+        }
+      },
+      take: parseInt(limit),
+      skip: parseInt(skip),
+    });
+
+    const total = await this.databaseService.deposit.count({
+    });
+
+    return { success: true, data: { deposits, total } };
+  }
+
+  async findWithdrawals(
+    limit: string = '10',
+    skip: string = '0',
+  ) {
+    const withdrawals = await this.databaseService.withdrawal.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        wallet: {
+          select: {
+            user: {
+              select: {
+                username: true,
+              }
+            }
+          }
+        }
+      },
+      take: parseInt(limit),
+      skip: parseInt(skip),
+    });
+
+    const total = await this.databaseService.withdrawal.count({
+    });
+
+    return { success: true, data: { withdrawals, total } };
+  }
 }

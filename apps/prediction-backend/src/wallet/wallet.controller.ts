@@ -52,7 +52,13 @@ export class WalletController {
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
-    return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
+    if (req.user.role !== 'Admin') {
+      return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
+    }
+    else
+    {
+      return this.walletService.findDeposits(limit, skip);
+    }
   }
 
   @Get('withdrawals')
@@ -61,6 +67,12 @@ export class WalletController {
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
-    return this.walletService.findWithdrawalsByUserId(req.user.id, limit, skip);
+    if (req.user.role !== 'Admin') {
+      return this.walletService.findWithdrawalsByUserId(req.user.id, limit, skip);
+    }
+    else
+    {
+      return this.walletService.findWithdrawals(limit, skip)
+    }
   }
 }

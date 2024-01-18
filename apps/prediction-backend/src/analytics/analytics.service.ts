@@ -147,4 +147,59 @@ export class AnalyticsService {
 
     return { success: true, data: { bets, wins } };
   }
+
+  async getTransactionDataForLast2Months() {
+    const currentDate = new Date(new Date().setDate(1));
+    currentDate.setHours(0, 0, 0, 0); // Set the time to midnight
+  
+    // Calculate the start date of 2 months ago
+    const startDate = new Date(currentDate);
+    startDate.setMonth(startDate.getMonth() - 1);
+
+    const endDate = new Date(currentDate);
+
+    const monthlyData: { [key: string]: unknown }[] = [];
+
+    while (startDate <= endDate) {
+      const monthName = startDate.toLocaleDateString('en-US', {
+        month: 'short',
+      });
+
+      const withdrawal = await this.databaseService.withdrawal.aggregate({
+        where: {
+          status: 'Completed',
+          createdAt: {
+            gte: startDate,
+            lt: new Date(
+              new Date(startDate).setMonth(startDate.getMonth() + 1),
+            ),
+          },
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      const deposit = await this.databaseService.deposit.aggregate({
+        where: {
+          status: 'Completed',
+          createdAt: {
+            gte: startDate,
+            lt: new Date(
+              new Date(startDate).setMonth(startDate.getMonth() + 1),
+            ),
+          },
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      monthlyData.push({ month: monthName, withdrawal: Number(withdrawal._sum.amount), deposit: Number(deposit._sum.amount) });
+      startDate.setMonth(startDate.getMonth() + 1);
+    }
+
+    return { success: true, data: monthlyData };
+  }
+
 }
