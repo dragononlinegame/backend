@@ -202,4 +202,34 @@ export class AnalyticsService {
     return { success: true, data: monthlyData };
   }
 
+  async getProfits(from: string | undefined,
+    to: string | undefined,
+    limit: string = '10',
+    skip: string = '0',)
+  {
+    const profits = await this.databaseService.profit.findMany({
+      where: {
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte:  to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        },
+        type: 'Daily'
+      },
+      take: parseInt(limit),
+      skip: parseInt(skip)
+    })
+
+    const total = await this.databaseService.profit.count({
+      where: {
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte:  to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        },
+        type: 'Daily'
+      }
+    })
+
+    return { success: true, data: { profits, total } };
+  }
+
 }

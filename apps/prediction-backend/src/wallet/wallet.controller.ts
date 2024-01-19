@@ -49,6 +49,8 @@ export class WalletController {
   @Get('deposits')
   deposits(
     @Request() req,
+    @Query('from') from: string | undefined = undefined,
+    @Query('to') to: string | undefined = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
@@ -57,13 +59,16 @@ export class WalletController {
     }
     else
     {
-      return this.walletService.findDeposits(limit, skip);
+      console.log(from, to)
+      return this.walletService.findDeposits(from, to, limit, skip);
     }
   }
 
   @Get('withdrawals')
   withdrawals(
     @Request() req,
+    @Query('from') from: string | undefined = undefined,
+    @Query('to') to: string | undefined = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
@@ -72,7 +77,8 @@ export class WalletController {
     }
     else
     {
-      return this.walletService.findWithdrawals(limit, skip)
+      console.log(from, to)
+      return this.walletService.findWithdrawals(from, to, limit, skip)
     }
   }
 }

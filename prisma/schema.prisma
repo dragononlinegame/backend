@@ -38,6 +38,12 @@ enum commission_type {
   SponsorIncome
 }
 
+enum profit_type {
+  Daily
+  Weekly
+  Monthly
+}
+
 model user {
   id       Int     @id @default(autoincrement())
   phone    String  @unique
@@ -202,4 +208,14 @@ model event {
   description String?
   image_url   String
   isActive    Boolean @default(false)
+}
+
+model profit {
+  id Int @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  betAmount Decimal
+  winAmount Decimal
+  profitAmount Decimal
+  type profit_type @default(Daily)
 }

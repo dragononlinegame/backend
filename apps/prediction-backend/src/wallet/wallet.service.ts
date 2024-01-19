@@ -211,6 +211,8 @@ export class WalletService {
   }
 
   async findDeposits(
+    from: string | undefined,
+    to: string | undefined,
     limit: string = '10',
     skip: string = '0',
   ) {
@@ -219,11 +221,18 @@ export class WalletService {
       orderBy: {
         createdAt: 'desc',
       },
+      where: {
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        }
+      },
       include: {
         wallet: {
           select: {
             user: {
               select: {
+                id: true,
                 username: true,
               }
             }
@@ -235,12 +244,20 @@ export class WalletService {
     });
 
     const total = await this.databaseService.deposit.count({
+      where:{
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        }
+      }
     });
 
     return { success: true, data: { deposits, total } };
   }
 
   async findWithdrawals(
+    from: string | undefined,
+    to: string | undefined,
     limit: string = '10',
     skip: string = '0',
   ) {
@@ -248,11 +265,18 @@ export class WalletService {
       orderBy: {
         createdAt: 'desc',
       },
+      where: {
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        }
+      },
       include: {
         wallet: {
           select: {
             user: {
               select: {
+                id: true,
                 username: true,
               }
             }
@@ -264,6 +288,12 @@ export class WalletService {
     });
 
     const total = await this.databaseService.withdrawal.count({
+      where:{
+        createdAt: {
+          gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+        }
+      }
     });
 
     return { success: true, data: { withdrawals, total } };
