@@ -36,11 +36,13 @@ export class WalletController {
   @Get('transactions')
   transactions(
     @Request() req,
+    @Query('type') type: string | undefined = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
   ) {
     return this.walletService.findTransactionsByUserId(
       req.user.id,
+      type,
       limit,
       skip,
     );
@@ -56,10 +58,8 @@ export class WalletController {
   ) {
     if (req.user.role !== 'Admin') {
       return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
-    }
-    else
-    {
-      console.log(from, to)
+    } else {
+      console.log(from, to);
       return this.walletService.findDeposits(from, to, limit, skip);
     }
   }
@@ -73,12 +73,14 @@ export class WalletController {
     @Query('skip') skip: string = '0',
   ) {
     if (req.user.role !== 'Admin') {
-      return this.walletService.findWithdrawalsByUserId(req.user.id, limit, skip);
-    }
-    else
-    {
-      console.log(from, to)
-      return this.walletService.findWithdrawals(from, to, limit, skip)
+      return this.walletService.findWithdrawalsByUserId(
+        req.user.id,
+        limit,
+        skip,
+      );
+    } else {
+      console.log(from, to);
+      return this.walletService.findWithdrawals(from, to, limit, skip);
     }
   }
 }

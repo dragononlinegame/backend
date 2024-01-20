@@ -119,6 +119,7 @@ export class WalletService {
 
   async findTransactionsByUserId(
     userid: number,
+    type: undefined | string,
     limit: string = '10',
     skip: string = '0',
   ) {
@@ -131,6 +132,7 @@ export class WalletService {
     const transactions = await this.databaseService.transaction.findMany({
       where: {
         walletId: wallet.id,
+        description: type,
       },
       orderBy: {
         createdAt: 'desc',
@@ -216,7 +218,6 @@ export class WalletService {
     limit: string = '10',
     skip: string = '0',
   ) {
-
     const deposits = await this.databaseService.deposit.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -224,8 +225,8 @@ export class WalletService {
       where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
-        }
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
+        },
       },
       include: {
         wallet: {
@@ -234,22 +235,22 @@ export class WalletService {
               select: {
                 id: true,
                 username: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       take: parseInt(limit),
       skip: parseInt(skip),
     });
 
     const total = await this.databaseService.deposit.count({
-      where:{
+      where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
-        }
-      }
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
+        },
+      },
     });
 
     return { success: true, data: { deposits, total } };
@@ -268,8 +269,8 @@ export class WalletService {
       where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
-        }
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
+        },
       },
       include: {
         wallet: {
@@ -278,22 +279,22 @@ export class WalletService {
               select: {
                 id: true,
                 username: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       take: parseInt(limit),
       skip: parseInt(skip),
     });
 
     const total = await this.databaseService.withdrawal.count({
-      where:{
+      where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
-        }
-      }
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
+        },
+      },
     });
 
     return { success: true, data: { withdrawals, total } };
