@@ -68,13 +68,11 @@ export class PaymentGatewayService {
   }
 
   generateChecksum(base64encodedReqBody: string) {
-    return (
-      createHash('sha256')
-        .update(base64encodedReqBody + this.apiEndpoint + this.saltkey)
-        .digest('base64') +
-      '###' +
-      this.saltIndex
-    );
+    const sha256 = createHash('sha256')
+      .update(base64encodedReqBody + this.apiEndpoint + this.saltkey)
+      .digest('hex');
+
+    return sha256 + '###' + this.saltIndex;
   }
 
   async initiateUpiOpenIntent(
