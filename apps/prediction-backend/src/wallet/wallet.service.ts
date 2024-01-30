@@ -1,10 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { nanoid } from 'nanoid';
+import { PaymentGatewayService } from '../paymentGateway/paymentGateway.service';
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(
+    private readonly databaseService: DatabaseService,
+    // private readonly paymentGatewayService: PaymentGatewayService,
+  ) {}
 
   async getWalletByUserId(id: number) {
     const wallet = await this.databaseService.wallet.findFirst({
@@ -21,6 +25,23 @@ export class WalletService {
   }
 
   async rechargeWalletByUserId(userid: number, amount: number) {
+    const txnId = nanoid(12);
+
+    // const user = await this.databaseService.user.findFirst({
+    //   where: {
+    //     id: userid,
+    //   },
+    //   select: {
+    //     phone: true,
+    //   },
+    // });
+
+    // return this.paymentGatewayService.initiateUpiOpenIntent(
+    //   amount,
+    //   user.phone,
+    //   '',
+    // );
+
     await this.databaseService.wallet.update({
       where: {
         userId: userid,
@@ -38,7 +59,7 @@ export class WalletService {
         },
         deposits: {
           create: {
-            reference: nanoid(12),
+            reference: txnId,
             amount: amount,
             method: 'UPI',
           },

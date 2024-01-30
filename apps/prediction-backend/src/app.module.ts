@@ -17,6 +17,7 @@ import { join } from 'path';
 import { ActivityService } from './activity/activity.service';
 import { ActivityController } from './activity/activity.controller';
 import { TeamModule } from './team/team.module';
+import { PaymentGatewayModule } from './paymentGateway/paymentGateway.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { TeamModule } from './team/team.module';
     BetsModule,
     AnalyticsModule,
     TeamModule,
+    PaymentGatewayModule,
   ],
   controllers: [AppController, ActivityController],
   providers: [AppService, ActivityService],
