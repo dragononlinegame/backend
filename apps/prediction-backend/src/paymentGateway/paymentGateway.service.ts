@@ -1,19 +1,12 @@
 import { HttpService } from '@nestjs/axios';
-import {
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { nanoid } from 'nanoid';
+import { Injectable } from '@nestjs/common';
 import { createHash } from 'crypto';
-import { catchError, firstValueFrom } from 'rxjs';
-import { AxiosError } from 'axios';
 
 @Injectable()
 export class PaymentGatewayService {
   readonly BASE_URL = `https://api.phonepe.com/apis/hermes`;
   readonly apiEndpoint = `/pg/v1/pay`;
-  readonly webhookUrl = `https://info.dragononlinegame.com/payments/webhook`;
+  readonly webhookUrl = `https://info.dragononlinegame.com/v1/api/payments/webhook`;
   readonly targetApps = {
     PhonePe: 'com.phonepe.app',
     Paytm: 'net.one97.paytm',
@@ -42,23 +35,23 @@ export class PaymentGatewayService {
     }
   }
 
-  constructRequestBody(amount: number, mobileNumber: string, upiApp: string) {
-    //   paymentInstrument: {
-    //     type: 'UPI_INTENT',
-    //     targetApp: this.targetApps[upiApp] ?? this.targetApps['PhonePe'],
-    //   },
+  constructRequestBody(
+    userid: number,
+    txnId: string,
+    amount: number,
+    mobileNumber: string,
+  ) {
+    const amountInPaisa = amount * 100;
 
     return {
       merchantId: this.merchantId,
-      merchantTransactionId: nanoid(),
-      amount: amount,
+      merchantTransactionId: txnId,
+      merchantUserId: userid,
+      amount: amountInPaisa,
       callbackUrl: this.webhookUrl,
       mobileNumber: mobileNumber,
-      deviceContext: {
-        deviceOS: 'ANDROID',
-      },
       paymentInstrument: {
-        type: 'UPI_QR',
+        type: 'PAY_PAGE',
       },
     };
   }
@@ -73,46 +66,5 @@ export class PaymentGatewayService {
       .digest('hex');
 
     return sha256 + '###' + this.saltIndex;
-  }
-
-  async initiateUpiOpenIntent(
-    amount: number,
-    mobileNumber: string,
-    upiApp: string,
-  ) {
-    const reqBody = this.constructRequestBody(amount, mobileNumber, upiApp);
-    const base64encodedReqBody = this.encodeRequestBody(
-      JSON.stringify(reqBody),
-    );
-    const checksum = this.generateChecksum(base64encodedReqBody);
-
-    const { data } = await firstValueFrom(
-      this.httpService
-        .post<{
-          success: boolean;
-          code: string;
-          message: string;
-          data?: { [key: string]: unknown };
-        }>(
-          `${this.BASE_URL}${this.apiEndpoint}`,
-          {
-            request: base64encodedReqBody,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-VERIFY': checksum,
-            },
-          },
-        )
-        .pipe(
-          catchError((error: AxiosError) => {
-            console.log(error);
-            throw new InternalServerErrorException();
-          }),
-        ),
-    );
-
-    return data;
   }
 }

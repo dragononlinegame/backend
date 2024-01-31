@@ -7,7 +7,7 @@ import { PaymentGatewayService } from '../paymentGateway/paymentGateway.service'
 export class WalletService {
   constructor(
     private readonly databaseService: DatabaseService,
-    // private readonly paymentGatewayService: PaymentGatewayService,
+    private readonly paymentGatewayService: PaymentGatewayService,
   ) {}
 
   async getWalletByUserId(id: number) {
@@ -27,80 +27,44 @@ export class WalletService {
   async rechargeWalletByUserId(userid: number, amount: number) {
     const txnId = nanoid(12);
 
-    // const user = await this.databaseService.user.findFirst({
-    //   where: {
-    //     id: userid,
-    //   },
-    //   select: {
-    //     phone: true,
-    //   },
-    // });
-
-    // return this.paymentGatewayService.initiateUpiOpenIntent(
-    //   amount,
-    //   user.phone,
-    //   '',
-    // );
-
-    await this.databaseService.wallet.update({
+    const user = await this.databaseService.user.findFirst({
       where: {
-        userId: userid,
+        id: userid,
       },
-      data: {
-        balance: {
-          increment: amount,
-        },
-        transactions: {
-          create: {
-            amount: amount,
-            type: 'Credit',
-            description: 'TopUp',
-          },
-        },
-        deposits: {
-          create: {
-            reference: txnId,
-            amount: amount,
-            method: 'UPI',
-          },
-        },
+      select: {
+        phone: true,
+        wallet: true,
       },
     });
 
-    if (parseFloat(process.env.SPONSOR_INCOME) > 0) {
-      const upline = await this.databaseService.teamConfig.findFirst({
-        where: {
-          userId: userid,
-          level: 1,
-        },
-      });
+    await this.databaseService.deposit.create({
+      data: {
+        walletId: user.wallet.id,
+        amount: amount,
+        method: 'UPI',
+        reference: txnId,
+        status: 'Pending',
+      },
+    });
 
-      if (upline) {
-        const bonus_amount = amount * parseFloat(process.env.SPONSOR_INCOME);
-
-        await this.databaseService.wallet.update({
-          where: {
-            userId: upline.uplineId,
-          },
-          data: {
-            balance: {
-              increment: bonus_amount,
-            },
-            transactions: {
-              create: {
-                amount: bonus_amount,
-                type: 'Credit',
-                description: 'Sponsor Income',
-              },
-            },
-          },
-        });
-      }
-    }
+    const requestBody = this.paymentGatewayService.constructRequestBody(
+      userid,
+      txnId,
+      amount,
+      user.phone,
+    );
+    const base64encodedBody = this.paymentGatewayService.encodeRequestBody(
+      JSON.stringify(requestBody),
+    );
+    const checksum =
+      this.paymentGatewayService.generateChecksum(base64encodedBody);
 
     return {
       success: true,
-      data: 'success',
+      data: {
+        base64encodedBody,
+        checksum,
+      },
     };
   }
 
