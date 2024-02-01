@@ -46,7 +46,7 @@ export class PaymentGatewayService {
     return {
       merchantId: this.merchantId,
       merchantTransactionId: txnId,
-      merchantUserId: userid,
+      merchantUserId: userid.toString(),
       amount: amountInPaisa,
       callbackUrl: this.webhookUrl,
       mobileNumber: mobileNumber,

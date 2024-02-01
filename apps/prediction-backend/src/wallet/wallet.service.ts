@@ -27,6 +27,9 @@ export class WalletService {
   async rechargeWalletByUserId(userid: number, amount: number) {
     const txnId = nanoid(12);
 
+    // Validate Amount HERE:
+    // Like MIN, MAX, isNaN, etc
+
     const user = await this.databaseService.user.findFirst({
       where: {
         id: userid,
