@@ -1,6 +1,11 @@
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Nest Backend For Color Prediction Game
+
+- Apps
+  |
+  |- prediction-backend (main)
+  |- queue-workers (queue workers for processing bets, winnings, commissions)
 
 ## Installation
 
@@ -8,18 +13,36 @@
 $ npm install
 ```
 
-## Running the app
+## Running the app on development
 
 ```bash
-# development
-$ npm run start
-
 # watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# terminal 1
+$ npx nest start prediction-backend --watch
+# terminal 1
+$ npx nest start queue-workers --watch
 ```
+
+## Running the app on production
+
+```bash
+# build
+$ npx nest build prediction-backend
+$ npx nest build queue-workers
+
+# run using node
+# terminal 1
+$ npx nest start prediction-backend
+# terminal 2
+$ npx nest start queue-workers
+
+
+# run using pm2
+$ pm2 start dist/apps/prediction-backend/main
+$ pm2 start dist/apps/queue-workers/main
+```
+
+`
 
 ## API Reference
 

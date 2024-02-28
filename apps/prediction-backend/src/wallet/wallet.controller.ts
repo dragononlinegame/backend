@@ -6,18 +6,31 @@ import {
   Query,
   Body,
   UseGuards,
+  Param,
+  ParseIntPipe,
+  UnauthorizedException,
+  Put,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { roles } from '@prisma/client';
+import { DatabaseService } from '../database/database.service';
 
 @UseGuards(AuthGuard)
 @Controller('wallet')
 export class WalletController {
-  constructor(private readonly walletService: WalletService) {}
+  constructor(
+    private readonly walletService: WalletService,
+    private readonly databaseService: DatabaseService,
+  ) {}
 
   @Post('recharge')
   topUpwallet(@Request() req, @Body() body) {
-    return this.walletService.rechargeWalletByUserId(req.user.id, body.amount);
+    return this.walletService.rechargeWalletByUserId(
+      req.user.id,
+      body.amount,
+      body.utr,
+    );
   }
 
   @Post('withdraw')
@@ -51,6 +64,8 @@ export class WalletController {
   @Get('deposits')
   deposits(
     @Request() req,
+    @Query('src') src: string | undefined = undefined,
+    @Query('status') status: string | undefined = undefined,
     @Query('from') from: string | undefined = undefined,
     @Query('to') to: string | undefined = undefined,
     @Query('limit') limit: string = '10',
@@ -60,7 +75,14 @@ export class WalletController {
       return this.walletService.findDepositsByUserId(req.user.id, limit, skip);
     } else {
       console.log(from, to);
-      return this.walletService.findDeposits(from, to, limit, skip);
+      return this.walletService.findDeposits(
+        src,
+        status,
+        from,
+        to,
+        limit,
+        skip,
+      );
     }
   }
 
@@ -81,6 +103,113 @@ export class WalletController {
     } else {
       console.log(from, to);
       return this.walletService.findWithdrawals(from, to, limit, skip);
+    }
+  }
+
+  @Put('deposits/:id/approve')
+  async approve(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+
+    try {
+      const deposit = await this.databaseService.deposit.findFirst({
+        where: {
+          id: id,
+        },
+        select: {
+          id: true,
+          status: true,
+          wallet: true,
+          amount: true,
+        },
+      });
+
+      if (!deposit) {
+        return { status: 'false', message: 'Deposit not found.' };
+      }
+
+      if (deposit.status === 'Pending') {
+        const updated_deposit = await this.databaseService.deposit.update({
+          where: {
+            id: deposit.id,
+          },
+          data: {
+            status: 'Completed',
+            method: 'UPI',
+          },
+          include: {
+            wallet: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    username: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        await this.databaseService.wallet.update({
+          where: {
+            id: deposit.wallet.id,
+          },
+          data: {
+            balance: {
+              increment: deposit.amount,
+            },
+            transactions: {
+              create: {
+                amount: deposit.amount,
+                type: 'Credit',
+                description: 'TopUp',
+              },
+            },
+          },
+        });
+
+        if (parseFloat(process.env.SPONSOR_INCOME) > 0) {
+          const upline = await this.databaseService.teamConfig.findFirst({
+            where: {
+              userId: deposit.wallet.userId,
+              level: 1,
+            },
+          });
+
+          if (upline) {
+            const bonus_amount =
+              Number(deposit.amount) * parseFloat(process.env.SPONSOR_INCOME);
+
+            await this.databaseService.wallet.update({
+              where: {
+                userId: upline.uplineId,
+              },
+              data: {
+                balance: {
+                  increment: bonus_amount,
+                },
+                transactions: {
+                  create: {
+                    amount: bonus_amount,
+                    type: 'Credit',
+                    description: 'Sponsor Income',
+                  },
+                },
+              },
+            });
+          }
+        }
+
+        return { success: 'true', message: 'success', data: updated_deposit };
+      } else {
+        return {
+          status: 'false',
+          message: 'Only pending deposits can be updated.',
+        };
+      }
+    } catch (e) {
+      console.log(e);
+      throw new Error('seomthing went wrong');
     }
   }
 }

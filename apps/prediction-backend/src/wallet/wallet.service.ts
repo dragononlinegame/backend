@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { nanoid } from 'nanoid';
 import { PaymentGatewayService } from '../paymentGateway/paymentGateway.service';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class WalletService {
@@ -24,7 +25,11 @@ export class WalletService {
     return { success: true, data: wallet };
   }
 
-  async rechargeWalletByUserId(userid: number, amount: number) {
+  async rechargeWalletByUserId(
+    userid: number,
+    amount: number,
+    utr: string | undefined,
+  ) {
     const txnId = nanoid(12);
 
     // Validate Amount HERE:
@@ -40,34 +45,38 @@ export class WalletService {
       },
     });
 
-    await this.databaseService.deposit.create({
+    const deposit = await this.databaseService.deposit.create({
       data: {
         walletId: user.wallet.id,
         amount: amount,
         method: 'UPI',
-        reference: txnId,
+        reference: utr ?? txnId,
         status: 'Pending',
       },
     });
 
-    const requestBody = this.paymentGatewayService.constructRequestBody(
-      userid,
-      txnId,
-      amount,
-      user.phone,
-    );
-    const base64encodedBody = this.paymentGatewayService.encodeRequestBody(
-      JSON.stringify(requestBody),
-    );
-    const checksum =
-      this.paymentGatewayService.generateChecksum(base64encodedBody);
+    // const requestBody = this.paymentGatewayService.constructRequestBody(
+    //   userid,
+    //   txnId,
+    //   amount,
+    //   user.phone,
+    // );
+    // const base64encodedBody = this.paymentGatewayService.encodeRequestBody(
+    //   JSON.stringify(requestBody),
+    // );
+    // const checksum =
+    //   this.paymentGatewayService.generateChecksum(base64encodedBody);
 
     return {
       success: true,
+      message: 'deposit request initiated.',
       data: {
-        base64encodedBody,
-        checksum,
+        ref: deposit.reference,
       },
+      // data: {
+      //   base64encodedBody,
+      //   checksum,
+      // },
     };
   }
 
@@ -201,6 +210,8 @@ export class WalletService {
   }
 
   async findDeposits(
+    src: string | undefined,
+    status: string | undefined,
     from: string | undefined,
     to: string | undefined,
     limit: string = '10',
@@ -211,6 +222,12 @@ export class WalletService {
         createdAt: 'desc',
       },
       where: {
+        reference: { contains: src },
+        status: status
+          ? status === 'All'
+            ? undefined
+            : (status as 'Pending' | 'Completed')
+          : undefined,
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
           lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,

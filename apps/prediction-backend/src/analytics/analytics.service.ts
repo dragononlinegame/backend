@@ -151,7 +151,7 @@ export class AnalyticsService {
   async getTransactionDataForLast2Months() {
     const currentDate = new Date(new Date().setDate(1));
     currentDate.setHours(0, 0, 0, 0); // Set the time to midnight
-  
+
     // Calculate the start date of 2 months ago
     const startDate = new Date(currentDate);
     startDate.setMonth(startDate.getMonth() - 1);
@@ -176,8 +176,8 @@ export class AnalyticsService {
           },
         },
         _sum: {
-          amount: true
-        }
+          amount: true,
+        },
       });
 
       const deposit = await this.databaseService.deposit.aggregate({
@@ -191,45 +191,52 @@ export class AnalyticsService {
           },
         },
         _sum: {
-          amount: true
-        }
+          amount: true,
+        },
       });
 
-      monthlyData.push({ month: monthName, withdrawal: Number(withdrawal._sum.amount), deposit: Number(deposit._sum.amount) });
+      monthlyData.push({
+        month: monthName,
+        withdrawal: Number(withdrawal._sum.amount),
+        deposit: Number(deposit._sum.amount),
+      });
       startDate.setMonth(startDate.getMonth() + 1);
     }
 
     return { success: true, data: monthlyData };
   }
 
-  async getProfits(from: string | undefined,
+  async getProfits(
+    from: string | undefined,
     to: string | undefined,
     limit: string = '10',
-    skip: string = '0',)
-  {
+    skip: string = '0',
+  ) {
     const profits = await this.databaseService.profit.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
       where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte:  to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
         },
-        type: 'Daily'
+        type: 'Daily',
       },
       take: parseInt(limit),
-      skip: parseInt(skip)
-    })
+      skip: parseInt(skip),
+    });
 
     const total = await this.databaseService.profit.count({
       where: {
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
-          lte:  to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined
+          lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
         },
-        type: 'Daily'
-      }
-    })
+        type: 'Daily',
+      },
+    });
 
     return { success: true, data: { profits, total } };
   }
-
 }
