@@ -78,6 +78,18 @@ model teamConfig {
   @@index([userId])
 }
 
+model bankDetail {
+  id       Int @id @default(autoincrement())
+  walletId Int @unique
+
+  beneficiaryName String
+  accountNumber   String
+  bankName        String
+  branchIfscCode  String
+
+  wallet wallet? @relation(fields: [walletId], references: [id])
+}
+
 model wallet {
   id      Int     @id @default(autoincrement())
   userId  Int     @unique
@@ -87,6 +99,7 @@ model wallet {
   transactions transaction[]
   deposits     deposit[]
   withdrawals  withdrawal[]
+  bankDetails  bankDetail[]
 }
 
 model transaction {
@@ -211,11 +224,17 @@ model event {
 }
 
 model profit {
-  id Int @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  betAmount Decimal
-  winAmount Decimal
+  betAmount    Decimal
+  winAmount    Decimal
   profitAmount Decimal
-  type profit_type @default(Daily)
+  type         profit_type @default(Daily)
+}
+
+model settings {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
 }

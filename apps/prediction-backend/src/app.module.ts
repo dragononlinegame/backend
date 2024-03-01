@@ -18,6 +18,7 @@ import { ActivityService } from './activity/activity.service';
 import { ActivityController } from './activity/activity.controller';
 import { TeamModule } from './team/team.module';
 import { PaymentGatewayModule } from './paymentGateway/paymentGateway.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PaymentGatewayModule } from './paymentGateway/paymentGateway.module';
       },
     }),
     CronModule,
+    SettingsModule,
     DatabaseModule,
     AuthModule,
     UsersModule,

@@ -41,9 +41,25 @@ export class WalletController {
     );
   }
 
+  @Post('bank-detail')
+  async createBankDetail(@Request() req, @Body() body) {
+    return this.walletService.addBankDetail(
+      req.user.id,
+      body.beneficiaryName,
+      body.accountNumber,
+      body.bankName,
+      body.branchIfscCode,
+    );
+  }
+
   @Get()
   wallet(@Request() req) {
     return this.walletService.getWalletByUserId(req.user.id);
+  }
+
+  @Get('bank-detail')
+  bank(@Request() req) {
+    return this.walletService.getBankDetail(req.user.id);
   }
 
   @Get('transactions')
@@ -106,8 +122,12 @@ export class WalletController {
     }
   }
 
-  @Put('deposits/:id/approve')
-  async approve(@Request() req, @Param('id', ParseIntPipe) id: number) {
+  @Put('deposits/:id')
+  async update(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { action: 'approve' | 'reject' },
+  ) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
 
     try {
@@ -128,12 +148,18 @@ export class WalletController {
       }
 
       if (deposit.status === 'Pending') {
+        const total_deposits = await this.databaseService.deposit.count({
+          where: {
+            status: 'Completed',
+          },
+        });
+
         const updated_deposit = await this.databaseService.deposit.update({
           where: {
             id: deposit.id,
           },
           data: {
-            status: 'Completed',
+            status: body.action === 'approve' ? 'Completed' : 'Failed',
             method: 'UPI',
           },
           include: {
@@ -150,53 +176,58 @@ export class WalletController {
           },
         });
 
-        await this.databaseService.wallet.update({
-          where: {
-            id: deposit.wallet.id,
-          },
-          data: {
-            balance: {
-              increment: deposit.amount,
-            },
-            transactions: {
-              create: {
-                amount: deposit.amount,
-                type: 'Credit',
-                description: 'TopUp',
-              },
-            },
-          },
-        });
-
-        if (parseFloat(process.env.SPONSOR_INCOME) > 0) {
-          const upline = await this.databaseService.teamConfig.findFirst({
+        if (body.action === 'approve') {
+          await this.databaseService.wallet.update({
             where: {
-              userId: deposit.wallet.userId,
-              level: 1,
+              id: deposit.wallet.id,
+            },
+            data: {
+              balance: {
+                increment: deposit.amount,
+              },
+              transactions: {
+                create: {
+                  amount: deposit.amount,
+                  type: 'Credit',
+                  description: 'TopUp',
+                },
+              },
             },
           });
 
-          if (upline) {
-            const bonus_amount =
-              Number(deposit.amount) * parseFloat(process.env.SPONSOR_INCOME);
-
-            await this.databaseService.wallet.update({
+          if (
+            total_deposits < 1 &&
+            parseFloat(process.env.SPONSOR_INCOME) > 0
+          ) {
+            const upline = await this.databaseService.teamConfig.findFirst({
               where: {
-                userId: upline.uplineId,
-              },
-              data: {
-                balance: {
-                  increment: bonus_amount,
-                },
-                transactions: {
-                  create: {
-                    amount: bonus_amount,
-                    type: 'Credit',
-                    description: 'Sponsor Income',
-                  },
-                },
+                userId: deposit.wallet.userId,
+                level: 1,
               },
             });
+
+            if (upline) {
+              const bonus_amount =
+                Number(deposit.amount) * parseFloat(process.env.SPONSOR_INCOME);
+
+              await this.databaseService.wallet.update({
+                where: {
+                  userId: upline.uplineId,
+                },
+                data: {
+                  balance: {
+                    increment: bonus_amount,
+                  },
+                  transactions: {
+                    create: {
+                      amount: bonus_amount,
+                      type: 'Credit',
+                      description: 'Sponsor Income',
+                    },
+                  },
+                },
+              });
+            }
           }
         }
 

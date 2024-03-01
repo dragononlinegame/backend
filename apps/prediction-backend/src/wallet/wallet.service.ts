@@ -81,6 +81,18 @@ export class WalletService {
   }
 
   async initiateWithdrawalRequest(userid: number, amount: number) {
+    const wallet = await this.getWalletByUserId(userid);
+
+    try {
+      await this.databaseService.bankDetail.findFirstOrThrow({
+        where: {
+          walletId: wallet.data.id,
+        },
+      });
+    } catch (e) {
+      return { success: false, message: 'Please Add Your Bank Details' };
+    }
+
     await this.databaseService.$transaction(async (txn) => {
       const wallet = await txn.wallet.update({
         where: {
@@ -303,5 +315,48 @@ export class WalletService {
     });
 
     return { success: true, data: { withdrawals, total } };
+  }
+
+  async addBankDetail(
+    userid: number,
+    beneficiaryName: string,
+    accountNumber: string,
+    bankName: string,
+    branchIfscCode: string,
+  ) {
+    const wallet = await this.getWalletByUserId(userid);
+
+    const bankDetail = await this.databaseService.bankDetail.upsert({
+      where: {
+        walletId: wallet.data.id,
+      },
+      create: {
+        walletId: wallet.data.id,
+        beneficiaryName,
+        accountNumber,
+        bankName,
+        branchIfscCode,
+      },
+      update: {
+        beneficiaryName,
+        accountNumber,
+        bankName,
+        branchIfscCode,
+      },
+    });
+
+    return { success: true, data: bankDetail };
+  }
+
+  async getBankDetail(userid: number) {
+    const wallet = await this.getWalletByUserId(userid);
+
+    const bankDetail = await this.databaseService.bankDetail.findFirst({
+      where: {
+        walletId: wallet.data.id,
+      },
+    });
+
+    return { success: true, data: bankDetail };
   }
 }
