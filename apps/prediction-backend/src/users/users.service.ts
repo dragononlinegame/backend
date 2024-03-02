@@ -72,6 +72,12 @@ export class UsersService {
         status: true,
         isBanned: true,
         createdAt: true,
+        wallet: {
+          select: {
+            id: true,
+            balance: true,
+          },
+        },
       },
     });
 

@@ -243,4 +243,16 @@ export class WalletController {
       throw new Error('seomthing went wrong');
     }
   }
+
+  @Post('make-txn')
+  makeWalletTransaction(@Request() req, @Body() body) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+
+    return this.walletService.makeTransaction(
+      body.userid,
+      body.amount,
+      body.action,
+      body.note,
+    );
+  }
 }

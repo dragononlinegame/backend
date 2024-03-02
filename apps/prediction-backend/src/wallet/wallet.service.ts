@@ -359,4 +359,32 @@ export class WalletService {
 
     return { success: true, data: bankDetail };
   }
+
+  async makeTransaction(
+    userid: number,
+    amount: number,
+    action: 'Debit' | 'Credit',
+    note: string,
+  ) {
+    const wallet = await this.databaseService.wallet.update({
+      where: {
+        userId: userid,
+      },
+      data: {
+        balance: {
+          increment: action === 'Credit' ? amount : amount * -1,
+        },
+        transactions: {
+          create: {
+            amount: amount,
+            type: action,
+            status: 'Completed',
+            description: note || 'made by admin',
+          },
+        },
+      },
+    });
+
+    return { success: true, data: wallet };
+  }
 }
