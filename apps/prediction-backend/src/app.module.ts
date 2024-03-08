@@ -19,6 +19,7 @@ import { ActivityController } from './activity/activity.controller';
 import { TeamModule } from './team/team.module';
 import { PaymentGatewayModule } from './paymentGateway/paymentGateway.module';
 import { SettingsModule } from './settings/settings.module';
+import { SupportModule } from './support/support.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { SettingsModule } from './settings/settings.module';
     AnalyticsModule,
     TeamModule,
     PaymentGatewayModule,
+    SupportModule,
   ],
   controllers: [AppController, ActivityController],
   providers: [AppService, ActivityService],

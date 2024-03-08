@@ -44,6 +44,12 @@ enum profit_type {
   Monthly
 }
 
+enum issue_type {
+  Deposit
+  Withdrawal
+  Other
+}
+
 model user {
   id       Int     @id @default(autoincrement())
   phone    String  @unique
@@ -63,6 +69,7 @@ model user {
   wallet wallet?
   bets   bet[]
   upline teamConfig[]
+  issues issue[]
 }
 
 model teamConfig {
@@ -237,4 +244,34 @@ model settings {
   id    Int    @id @default(autoincrement())
   key   String @unique
   value String
+}
+
+model issue {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  type issue_type @default(Deposit)
+
+  amount String?
+  ref    String?
+
+  note     String?
+  response String?
+
+  status status @default(Pending)
+
+  userid    Int
+  user      user       @relation(fields: [userid], references: [id], onDelete: Cascade)
+  responses response[]
+}
+
+model response {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  message    String
+  responseBy String // Issuer | Resolver
+
+  issueId Int
+  issue   issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
 }
