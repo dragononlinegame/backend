@@ -15,6 +15,7 @@ import { WalletService } from './wallet.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { roles } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
+import * as bcrypt from 'bcrypt';
 
 @UseGuards(AuthGuard)
 @Controller('wallet')
@@ -34,7 +35,17 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  initiateWithdrawal(@Request() req, @Body() body) {
+  async initiateWithdrawal(@Request() req, @Body() body) {
+    const user = await this.databaseService.user.findFirst({
+      where: {
+        id: req.user.id,
+      },
+    });
+
+    if (!(await bcrypt.compare(body.password, user.password))) {
+      throw new UnauthorizedException('invalid credentials');
+    }
+
     return this.walletService.initiateWithdrawalRequest(
       req.user.id,
       body.amount,
@@ -150,6 +161,7 @@ export class WalletController {
       if (deposit.status === 'Pending') {
         const total_deposits = await this.databaseService.deposit.count({
           where: {
+            walletId: deposit.wallet.id,
             status: 'Completed',
           },
         });

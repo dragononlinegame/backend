@@ -139,10 +139,11 @@ model withdrawal {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
 
-  reference String  @unique
-  amount    Decimal
-  method    String
-  status    status  @default(Completed)
+  reference  String  @unique
+  amount     Decimal
+  method     String
+  status     status  @default(Completed)
+  bankDetail Json
 
   walletId Int
   wallet   wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)

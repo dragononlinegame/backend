@@ -38,7 +38,7 @@ export class AuthService {
   async signin(phone: string, password: string, @Res() response: Response) {
     const { data: user } = await this.usersService.findOneByPhone(phone);
 
-    if (!(await bcrypt.compare(password, user.password))) {
+    if (!(await this.comparePasswords(password, user.password))) {
       throw new UnauthorizedException('invalid credentials');
     }
 
