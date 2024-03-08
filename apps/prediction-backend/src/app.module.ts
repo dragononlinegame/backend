@@ -37,7 +37,7 @@ import { SupportModule } from './support/support.module';
         password: process.env.RADIS_PASS,
       },
     }),
-    CronModule,
+    // CronModule,
     SettingsModule,
     DatabaseModule,
     AuthModule,

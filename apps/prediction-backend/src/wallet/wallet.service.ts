@@ -131,6 +131,7 @@ export class WalletService {
                 reference: nanoid(12),
                 amount: amount,
                 method: 'UPI',
+                status: 'Pending',
                 bankDetail: {
                   beneficiaryName: bankDetail.beneficiaryName,
                   accountNumber: bankDetail.accountNumber,
@@ -143,10 +144,12 @@ export class WalletService {
         });
 
         if (Number(wallet.balance) < 0)
-          throw new HttpException(
-            'Insufficient Balance',
-            HttpStatus.BAD_REQUEST,
-          );
+          // throw new HttpException(
+          //   'Insufficient Balance',
+          //   HttpStatus.BAD_REQUEST,
+          // );
+
+          return { success: false, message: 'Insufficient Balance' };
       });
 
       return { success: true, data: 'success' };

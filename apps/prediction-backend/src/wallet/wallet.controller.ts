@@ -134,7 +134,7 @@ export class WalletController {
   }
 
   @Put('deposits/:id')
-  async update(
+  async updateDeposit(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { action: 'approve' | 'reject' },
@@ -254,6 +254,24 @@ export class WalletController {
       console.log(e);
       throw new Error('seomthing went wrong');
     }
+  }
+
+  @Put('withdrawals/:id')
+  async updateWithdrawal(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { action: 'approve' | 'reject' },
+  ) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+
+    this.databaseService.withdrawal.update({
+      where: {
+        id: id,
+      },
+      data: {
+        status: 'Completed',
+      },
+    });
   }
 
   @Post('make-txn')
