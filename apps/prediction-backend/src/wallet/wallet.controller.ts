@@ -10,10 +10,11 @@ import {
   ParseIntPipe,
   UnauthorizedException,
   Put,
+  Response,
 } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { roles } from '@prisma/client';
+import { response, roles, status } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import * as bcrypt from 'bcrypt';
 
@@ -116,6 +117,8 @@ export class WalletController {
   @Get('withdrawals')
   withdrawals(
     @Request() req,
+    @Query('src') src: string | undefined = undefined,
+    @Query('status') status: string | undefined = undefined,
     @Query('from') from: string | undefined = undefined,
     @Query('to') to: string | undefined = undefined,
     @Query('limit') limit: string = '10',
@@ -129,7 +132,14 @@ export class WalletController {
       );
     } else {
       console.log(from, to);
-      return this.walletService.findWithdrawals(from, to, limit, skip);
+      return this.walletService.findWithdrawals(
+        src,
+        status,
+        from,
+        to,
+        limit,
+        skip,
+      );
     }
   }
 
@@ -260,18 +270,113 @@ export class WalletController {
   async updateWithdrawal(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { action: 'approve' | 'reject' },
+    @Body() body: { action: 'stage' | 'approve' | 'reject' },
   ) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
 
-    this.databaseService.withdrawal.update({
+    const getStatus: { [key: string]: status } = {
+      stage: 'Staged',
+      approve: 'Completed',
+      reject: 'Failed',
+    };
+
+    if (body.action === 'reject') {
+      const withdrawal = await this.databaseService.withdrawal.findFirst({
+        where: {
+          id: id,
+        },
+      });
+
+      await this.databaseService.wallet.update({
+        where: {
+          id: withdrawal.walletId,
+        },
+        data: {
+          balance: {
+            increment: withdrawal.amount,
+          },
+          transactions: {
+            create: {
+              amount: withdrawal.amount,
+              type: 'Credit',
+              description: 'Withdrawal Rejected',
+            },
+          },
+        },
+      });
+    }
+
+    const updated_withdrawal = await this.databaseService.withdrawal.update({
       where: {
         id: id,
+      },
+      data: {
+        status: getStatus[body.action],
+      },
+      include: {
+        wallet: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return { success: true, message: 'success', data: updated_withdrawal };
+  }
+
+  @Post('payout')
+  async payoutCashWithdrawals(@Request() req) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+
+    await this.databaseService.withdrawal.updateMany({
+      where: {
+        status: 'Staged',
       },
       data: {
         status: 'Completed',
       },
     });
+
+    return { success: true, message: 'success' };
+  }
+
+  @Get('payout')
+  async getPayouts(@Request() req, @Response() response) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+
+    const withdrawals = await this.databaseService.withdrawal.findMany({
+      where: {
+        status: 'Staged',
+      },
+      select: {
+        id: true,
+        amount: true,
+        bankDetail: true,
+      },
+    });
+
+    const payouts = withdrawals.map((withdrawal) => ({
+      id: withdrawal.id,
+      amount: withdrawal.amount,
+      beneficiaryName: withdrawal.bankDetail['beneficiaryName'],
+      accountNumber: withdrawal.bankDetail['accountNumber'],
+      bankName: withdrawal.bankDetail['bankName'],
+      branchIfscCode: withdrawal.bankDetail['branchIfscCode'],
+    }));
+
+    const headerRow = Object.keys(payouts[0]).join(',') + '\n';
+    const csvRows = payouts.map((row) => Object.values(row).join(',') + '\n');
+    const csvData = headerRow + csvRows.join('');
+
+    response.setHeader('Content-Type', 'text/csv');
+    response.setHeader('Content-Disposition', 'attachment; filename=data.csv');
+    response.status(200).send(csvData);
   }
 
   @Post('make-txn')

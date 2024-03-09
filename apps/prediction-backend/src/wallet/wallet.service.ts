@@ -130,7 +130,7 @@ export class WalletService {
               create: {
                 reference: nanoid(12),
                 amount: amount,
-                method: 'UPI',
+                method: 'Bank Transfer',
                 status: 'Pending',
                 bankDetail: {
                   beneficiaryName: bankDetail.beneficiaryName,
@@ -295,6 +295,12 @@ export class WalletService {
 
     const total = await this.databaseService.deposit.count({
       where: {
+        reference: { contains: src },
+        status: status
+          ? status === 'All'
+            ? undefined
+            : (status as 'Pending' | 'Completed')
+          : undefined,
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
           lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
@@ -306,6 +312,8 @@ export class WalletService {
   }
 
   async findWithdrawals(
+    src: string | undefined,
+    status: string | undefined,
     from: string | undefined,
     to: string | undefined,
     limit: string = '10',
@@ -316,6 +324,12 @@ export class WalletService {
         createdAt: 'desc',
       },
       where: {
+        reference: { contains: src },
+        status: status
+          ? status === 'All'
+            ? undefined
+            : (status as 'Pending' | 'Completed')
+          : undefined,
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
           lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
@@ -339,6 +353,12 @@ export class WalletService {
 
     const total = await this.databaseService.withdrawal.count({
       where: {
+        reference: { contains: src },
+        status: status
+          ? status === 'All'
+            ? undefined
+            : (status as 'Pending' | 'Completed')
+          : undefined,
         createdAt: {
           gte: from ? new Date(new Date(from).setHours(0, 0, 0)) : undefined,
           lte: to ? new Date(new Date(to).setHours(23, 59, 59)) : undefined,
