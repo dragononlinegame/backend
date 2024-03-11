@@ -270,12 +270,13 @@ export class WalletController {
   async updateWithdrawal(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
-    @Body() body: { action: 'stage' | 'approve' | 'reject' },
+    @Body() body: { action: 'stage' | 'unstage' | 'approve' | 'reject' },
   ) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
 
     const getStatus: { [key: string]: status } = {
       stage: 'Staged',
+      unstage: 'Pending',
       approve: 'Completed',
       reject: 'Failed',
     };
