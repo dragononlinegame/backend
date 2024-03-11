@@ -4,12 +4,14 @@ import { nanoid } from 'nanoid';
 import { PaymentGatewayService } from '../paymentGateway/paymentGateway.service';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { SettingsService } from '../settings/settings.service';
 
 @Injectable()
 export class WalletService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly paymentGatewayService: PaymentGatewayService,
+    private readonly settingsService: SettingsService,
   ) {}
 
   async getWalletByUserId(id: number) {
@@ -31,10 +33,21 @@ export class WalletService {
     amount: number,
     utr: string | undefined,
   ) {
-    const txnId = nanoid(12);
+    // const txnId = nanoid(12);
 
-    // Validate Amount HERE:
-    // Like MIN, MAX, isNaN, etc
+    if (!utr || utr.length < 12) {
+      return { success: false, message: 'Invalid UTR.' };
+    }
+
+    const { data: MIN_DEPOSIT_AMOUNT } =
+      await this.settingsService.getSettingByKey('min_deposit_amount');
+
+    if (amount < Number(MIN_DEPOSIT_AMOUNT.value)) {
+      return {
+        success: false,
+        message: `deposit amount must be greater than ${MIN_DEPOSIT_AMOUNT.value}`,
+      };
+    }
 
     const user = await this.databaseService.user.findFirst({
       where: {
@@ -52,7 +65,7 @@ export class WalletService {
           walletId: user.wallet.id,
           amount: amount,
           method: 'UPI',
-          reference: utr ?? txnId,
+          reference: utr, //?? txnId,
           status: 'Pending',
         },
       });
@@ -101,61 +114,71 @@ export class WalletService {
   async initiateWithdrawalRequest(userid: number, amount: number) {
     const wallet = await this.getWalletByUserId(userid);
 
+    let bankDetail = null;
+    const { data: MIN_WITHDRAWAL_AMOUNT } =
+      await this.settingsService.getSettingByKey('min_withdraw_amount');
+    const { data: MAX_WITHDRAWAL_AMOUNT } =
+      await this.settingsService.getSettingByKey('max_withdraw_amount');
+
+    if (
+      amount < Number(MIN_WITHDRAWAL_AMOUNT.value) ||
+      amount > Number(MAX_WITHDRAWAL_AMOUNT.value)
+    ) {
+      return {
+        success: false,
+        message: `Amount must be in (${MIN_WITHDRAWAL_AMOUNT.value} - ${MAX_WITHDRAWAL_AMOUNT.value}) range.`,
+      };
+    }
+
     try {
-      const bankDetail = await this.databaseService.bankDetail.findFirstOrThrow(
-        {
-          where: {
-            walletId: wallet.data.id,
-          },
+      bankDetail = await this.databaseService.bankDetail.findFirstOrThrow({
+        where: {
+          walletId: wallet.data.id,
         },
-      );
-
-      await this.databaseService.$transaction(async (txn) => {
-        const wallet = await txn.wallet.update({
-          where: {
-            userId: userid,
-          },
-          data: {
-            balance: {
-              decrement: amount,
-            },
-            transactions: {
-              create: {
-                amount: amount,
-                type: 'Debit',
-                description: 'Withdrawal',
-              },
-            },
-            withdrawals: {
-              create: {
-                reference: nanoid(12),
-                amount: amount,
-                method: 'Bank Transfer',
-                status: 'Pending',
-                bankDetail: {
-                  beneficiaryName: bankDetail.beneficiaryName,
-                  accountNumber: bankDetail.accountNumber,
-                  bankName: bankDetail.bankName,
-                  branchIfscCode: bankDetail.branchIfscCode,
-                },
-              },
-            },
-          },
-        });
-
-        if (Number(wallet.balance) < 0)
-          // throw new HttpException(
-          //   'Insufficient Balance',
-          //   HttpStatus.BAD_REQUEST,
-          // );
-
-          return { success: false, message: 'Insufficient Balance' };
       });
-
-      return { success: true, data: 'success' };
     } catch (e) {
       return { success: false, message: 'Please Add Your Bank Details' };
     }
+
+    await this.databaseService.$transaction(async (txn) => {
+      const wallet = await txn.wallet.update({
+        where: {
+          userId: userid,
+        },
+        data: {
+          balance: {
+            decrement: amount,
+          },
+          transactions: {
+            create: {
+              amount: amount,
+              type: 'Debit',
+              description: 'Withdrawal',
+            },
+          },
+          withdrawals: {
+            create: {
+              reference: nanoid(12),
+              amount: amount,
+              method: 'Bank Transfer',
+              status: 'Pending',
+              bankDetail: {
+                beneficiaryName: bankDetail.beneficiaryName,
+                accountNumber: bankDetail.accountNumber,
+                bankName: bankDetail.bankName,
+                branchIfscCode: bankDetail.branchIfscCode,
+              },
+            },
+          },
+        },
+      });
+
+      if (Number(wallet.balance) < 0) {
+        throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
+      }
+    });
+
+    return { success: true, data: 'success' };
   }
 
   async findTransactionsByUserId(

@@ -2,6 +2,7 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SettingsService {
@@ -32,7 +33,11 @@ export class SettingsService {
   async getSettingByKey(key: string) {
     const cachedSetting = await this.cacheManager.get(key);
     if (cachedSetting) {
-      return { success: true, data: cachedSetting, cachehit: true };
+      return {
+        success: true,
+        data: cachedSetting as { id: number; key: string; value: string },
+        cachehit: true,
+      };
     }
 
     const setting = await this.databaseService.settings.findUnique({
@@ -61,6 +66,11 @@ export class SettingsService {
         key,
       },
     });
+
+    const cachedSetting = await this.cacheManager.get(key);
+    if (cachedSetting) {
+      await this.cacheManager.del(key);
+    }
 
     return { success: true, message: 'Setting deleted Succesfully' };
   }

@@ -46,6 +46,10 @@ export class BetsService {
     }
 
     const playtime = new Date(game.ended_at);
+
+    // Add 5sec Buffer
+    playtime.setSeconds(playtime.getSeconds() - 5);
+
     if (playtime <= new Date()) {
       throw new HttpException(
         'Play time has already ended',

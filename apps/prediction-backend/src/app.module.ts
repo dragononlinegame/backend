@@ -20,6 +20,8 @@ import { TeamModule } from './team/team.module';
 import { PaymentGatewayModule } from './paymentGateway/paymentGateway.module';
 import { SettingsModule } from './settings/settings.module';
 import { SupportModule } from './support/support.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -37,7 +39,19 @@ import { SupportModule } from './support/support.module';
         password: process.env.RADIS_PASS,
       },
     }),
-    // CronModule,
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 10,
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+    CronModule,
     SettingsModule,
     DatabaseModule,
     AuthModule,
@@ -51,6 +65,13 @@ import { SupportModule } from './support/support.module';
     SupportModule,
   ],
   controllers: [AppController, ActivityController],
-  providers: [AppService, ActivityService],
+  providers: [
+    AppService,
+    ActivityService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
