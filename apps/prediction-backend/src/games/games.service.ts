@@ -474,6 +474,7 @@ export class GamesService {
       const predefinedResult =
         await this.databaseService.predefinedResult.findFirst({
           where: {
+            type: type,
             serial: lastGameWithNullResult.serial,
           },
         });
@@ -595,10 +596,11 @@ export class GamesService {
     }
   }
 
-  async predefineResult(serial: string, result: string) {
+  async predefineResult(type: number, serial: string, result: string) {
     const predefinedResult = await this.databaseService.predefinedResult.create(
       {
         data: {
+          type,
           serial,
           result,
         },

@@ -187,6 +187,7 @@ model game {
 
 model predefinedResult {
   id     Int    @id @default(autoincrement())
+  type   Int
   serial String
   result String
 

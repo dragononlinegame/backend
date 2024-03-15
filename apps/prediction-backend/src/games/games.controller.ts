@@ -16,6 +16,7 @@ import { GamesService } from './games.service';
 import { UpdateGameDto } from './dto/update-game.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { roles } from '@prisma/client';
+import { PreResultDto } from './dto/pre-result.dto';
 
 @Controller('games')
 export class GamesController {
@@ -56,9 +57,13 @@ export class GamesController {
 
   @UseGuards(AuthGuard)
   @Post('preresults')
-  createPredefinedResult(@Request() req, @Body() body) {
+  createPredefinedResult(@Request() req, @Body() body: PreResultDto) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
-    return this.gamesService.predefineResult(body.serial, body.result);
+    return this.gamesService.predefineResult(
+      parseInt(body.type),
+      body.serial,
+      body.result,
+    );
   }
 
   @UseGuards(AuthGuard)
