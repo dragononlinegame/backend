@@ -8,11 +8,11 @@ export class BetListener {
   constructor(private readonly databaseService: DatabaseService) {}
 
   private LevelIncome = {
-    1: 0.008,
-    2: 0.005,
-    3: 0.003,
-    4: 0.002,
-    5: 0.002,
+    1: 0.08,
+    2: 0.05,
+    3: 0.03,
+    4: 0.02,
+    5: 0.01,
   };
 
   @OnEvent('bet.created', { async: true })

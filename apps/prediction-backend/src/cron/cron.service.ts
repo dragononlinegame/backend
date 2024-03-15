@@ -62,11 +62,9 @@ export class CronJobService {
     }
   }
 
-
   // PROFITS
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
-  async dailyProfitAudit()
-  {
+  async dailyProfitAudit() {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Set the time to midnight
 
@@ -80,25 +78,25 @@ export class CronJobService {
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        amount: true
-      }
-    })
+        amount: true,
+      },
+    });
 
     const wins = await this.databaseService.win.aggregate({
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        winAmount: true
-      }
-    })
+        winAmount: true,
+      },
+    });
 
     const betAmount = Number(bets._sum.amount);
     const winAmount = Number(wins._sum.winAmount);
@@ -110,14 +108,13 @@ export class CronJobService {
         betAmount,
         winAmount,
         profitAmount: profit,
-        type: "Daily"
-      }
-    })
+        type: 'Daily',
+      },
+    });
   }
 
   @Cron(CronExpression.EVERY_WEEK)
-  async weeklyProfitAudit()
-  {
+  async weeklyProfitAudit() {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Set the time to midnight
 
@@ -131,25 +128,25 @@ export class CronJobService {
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        amount: true
-      }
-    })
+        amount: true,
+      },
+    });
 
     const wins = await this.databaseService.win.aggregate({
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        winAmount: true
-      }
-    })
+        winAmount: true,
+      },
+    });
 
     const betAmount = Number(bets._sum.amount);
     const winAmount = Number(wins._sum.winAmount);
@@ -161,14 +158,13 @@ export class CronJobService {
         betAmount,
         winAmount,
         profitAmount: profit,
-        type: "Weekly"
-      }
-    })
+        type: 'Weekly',
+      },
+    });
   }
 
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_MIDNIGHT)
-  async monthlyProfitAudit()
-  {
+  async monthlyProfitAudit() {
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0); // Set the time to midnight
 
@@ -182,25 +178,25 @@ export class CronJobService {
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        amount: true
-      }
-    })
+        amount: true,
+      },
+    });
 
     const wins = await this.databaseService.win.aggregate({
       where: {
         createdAt: {
           gte: new Date(startDate),
-          lte: new Date(endDate)
-        }
+          lte: new Date(endDate),
+        },
       },
       _sum: {
-        winAmount: true
-      }
-    })
+        winAmount: true,
+      },
+    });
 
     const betAmount = Number(bets._sum.amount);
     const winAmount = Number(wins._sum.winAmount);
@@ -212,8 +208,8 @@ export class CronJobService {
         betAmount,
         winAmount,
         profitAmount: profit,
-        type: "Monthly"
-      }
-    })
+        type: 'Monthly',
+      },
+    });
   }
 }

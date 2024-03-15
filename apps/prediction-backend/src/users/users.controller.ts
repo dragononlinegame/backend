@@ -32,9 +32,11 @@ export class UsersController {
     @Request() req,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
+    @Query('filterBy') filterBy = undefined,
+    @Query('filterValue') filterValue = undefined,
   ) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
-    return this.usersService.findAll(limit, skip);
+    return this.usersService.findAll(limit, skip, filterBy, filterValue);
   }
 
   @Get('profile')

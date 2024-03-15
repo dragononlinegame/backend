@@ -82,8 +82,19 @@ export class ActivityService {
     return { success: true, data: notifications };
   }
 
-  async getEvents(isActive: string) {
+  async getEvent(id: number) {
+    const event = await this.databaseService.event.findFirst({
+      where: {
+        id,
+      },
+    });
+
+    return { success: true, data: event };
+  }
+
+  async getEvents(isActive: string, isFeatured: string) {
     const parsedStatus = isActive ? JSON.parse(isActive) : undefined;
+    const parsedFeatured = isFeatured ? JSON.parse(isActive) : undefined;
 
     const events = await this.databaseService.event.findMany({
       orderBy: {
@@ -91,6 +102,7 @@ export class ActivityService {
       },
       where: {
         isActive: parsedStatus,
+        featured: parsedFeatured,
       },
     });
 

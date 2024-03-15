@@ -31,6 +31,26 @@ export class GamesService {
 
   private readonly numbers = Numbers;
 
+  findPredefinedWinningNumber(result: string) {
+    const VALID_RESULTS = {
+      small: [0, 1, 2, 3, 4],
+      big: [5, 6, 7, 8, 9],
+      green: [0, 2, 4, 6, 8],
+      red: [1, 3, 5, 7, 9],
+      violet: [0, 5],
+    };
+
+    const possibleWinningNumbes = VALID_RESULTS[result];
+
+    if (!possibleWinningNumbes) {
+      return null;
+    }
+
+    return possibleWinningNumbes[
+      Math.floor(Math.random() * possibleWinningNumbes.length)
+    ];
+  }
+
   async findWinningNumber(game_id: number) {
     const defaultMultiplier = parseFloat(
       process.env.DEFAULT_MULTIPLIER as string,
@@ -449,9 +469,26 @@ export class GamesService {
     });
 
     if (lastGameWithNullResult) {
-      const winning_number = await this.findWinningNumber(
-        lastGameWithNullResult.id,
-      );
+      let winning_number = null;
+
+      const predefinedResult =
+        await this.databaseService.predefinedResult.findFirst({
+          where: {
+            serial: lastGameWithNullResult.serial,
+          },
+        });
+
+      if (predefinedResult) {
+        winning_number = this.findPredefinedWinningNumber(
+          predefinedResult.result,
+        );
+      }
+
+      if (winning_number == null) {
+        winning_number = await this.findWinningNumber(
+          lastGameWithNullResult.id,
+        );
+      }
 
       // Draw Result of prv game.
       await this.update(lastGameWithNullResult.id, {
@@ -556,5 +593,40 @@ export class GamesService {
         return new_game;
       }
     }
+  }
+
+  async predefineResult(serial: string, result: string) {
+    const predefinedResult = await this.databaseService.predefinedResult.create(
+      {
+        data: {
+          serial,
+          result,
+        },
+      },
+    );
+
+    return { success: true, data: predefinedResult };
+  }
+
+  async deleteResult(id: number) {
+    const predefinedResult = await this.databaseService.predefinedResult.delete(
+      {
+        where: {
+          id,
+        },
+      },
+    );
+
+    return { success: true, message: 'success' };
+  }
+
+  async getPredefinedResults() {
+    const results = await this.databaseService.predefinedResult.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return { success: true, data: results };
   }
 }

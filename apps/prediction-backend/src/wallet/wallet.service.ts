@@ -176,6 +176,16 @@ export class WalletService {
       if (Number(wallet.balance) < 0) {
         throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
       }
+
+      if (Number(wallet.balance) < Number(wallet.locked)) {
+        throw new HttpException(
+          `you must bet another ${Number(wallet.locked).toLocaleString(
+            'en-US',
+            { style: 'currency', currency: 'inr' },
+          )} to avail withdrawal.`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     });
 
     return { success: true, data: 'success' };

@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Query,
   Request,
   UnauthorizedException,
@@ -44,6 +45,27 @@ export class GamesController {
   ) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
     return this.gamesService.findWins(type, limit, skip);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('preresults')
+  getPredefinedResults(@Request() req) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.gamesService.getPredefinedResults();
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('preresults')
+  createPredefinedResult(@Request() req, @Body() body) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.gamesService.predefineResult(body.serial, body.result);
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('preresults/:id')
+  removeResult(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.gamesService.deleteResult(id);
   }
 
   @UseGuards(AuthGuard)

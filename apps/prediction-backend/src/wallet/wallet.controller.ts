@@ -199,13 +199,22 @@ export class WalletController {
         });
 
         if (body.action === 'approve') {
+          const BonusModifier =
+            total_deposits < 1
+              ? parseFloat(process.env.SPONSOR_INCOME)
+              : parseFloat(process.env.SPONSOR_INCOME) * 0.1;
+          const DepositBonus = Number(deposit.amount) * BonusModifier;
+
           await this.databaseService.wallet.update({
             where: {
               id: deposit.wallet.id,
             },
             data: {
               balance: {
-                increment: deposit.amount,
+                increment: Number(deposit.amount) + DepositBonus,
+              },
+              locked: {
+                increment: Number(deposit.amount) * 0.5,
               },
               transactions: {
                 create: {
@@ -217,39 +226,42 @@ export class WalletController {
             },
           });
 
-          if (
-            total_deposits < 1 &&
-            parseFloat(process.env.SPONSOR_INCOME) > 0
-          ) {
-            const upline = await this.databaseService.teamConfig.findFirst({
+          const upline = await this.databaseService.teamConfig.findFirst({
+            where: {
+              userId: deposit.wallet.userId,
+              level: 1,
+            },
+          });
+
+          if (upline) {
+            await this.databaseService.wallet.update({
               where: {
-                userId: deposit.wallet.userId,
-                level: 1,
+                userId: upline.uplineId,
+              },
+              data: {
+                balance: {
+                  increment: DepositBonus,
+                },
+                transactions: {
+                  create: {
+                    amount: DepositBonus,
+                    type: 'Credit',
+                    description: 'Sponsor Income',
+                  },
+                },
               },
             });
 
-            if (upline) {
-              const bonus_amount =
-                Number(deposit.amount) * parseFloat(process.env.SPONSOR_INCOME);
-
-              await this.databaseService.wallet.update({
-                where: {
-                  userId: upline.uplineId,
-                },
-                data: {
-                  balance: {
-                    increment: bonus_amount,
-                  },
-                  transactions: {
-                    create: {
-                      amount: bonus_amount,
-                      type: 'Credit',
-                      description: 'Sponsor Income',
-                    },
-                  },
-                },
-              });
-            }
+            await this.databaseService.commission.create({
+              data: {
+                amount: DepositBonus,
+                fromId: deposit.wallet.userId,
+                toId: upline.uplineId,
+                level: 1,
+                isPaid: true,
+                type: 'SponsorIncome',
+              },
+            });
           }
         }
 

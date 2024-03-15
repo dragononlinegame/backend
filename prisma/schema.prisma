@@ -102,6 +102,10 @@ model wallet {
   id      Int     @id @default(autoincrement())
   userId  Int     @unique
   balance Decimal @default(0)
+  locked  Decimal @default(0)
+
+  totalBet Decimal @default(0)
+  totalWin Decimal @default(0)
 
   user         user          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions transaction[]
@@ -181,6 +185,14 @@ model game {
   wins win[]
 }
 
+model predefinedResult {
+  id     Int    @id @default(autoincrement())
+  serial String
+  result String
+
+  createdAt DateTime @default(now())
+}
+
 model bet {
   id         Int     @id @default(autoincrement())
   amount     Decimal
@@ -229,6 +241,7 @@ model event {
   name        String
   description String?
   image_url   String
+  featured    Boolean @default(false)
   isActive    Boolean @default(false)
 }
 

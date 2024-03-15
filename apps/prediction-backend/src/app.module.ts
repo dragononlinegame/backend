@@ -22,6 +22,7 @@ import { SettingsModule } from './settings/settings.module';
 import { SupportModule } from './support/support.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { APP_GUARD } from '@nestjs/core';
     TeamModule,
     PaymentGatewayModule,
     SupportModule,
+    StorageModule,
   ],
   controllers: [AppController, ActivityController],
   providers: [

@@ -18,8 +18,8 @@ export class BetProcessor {
     }>,
   ) {
     const bet = job.data;
-    
-    console.log(`processing bet id:: ${bet.id}`)
+
+    console.log(`processing bet id:: ${bet.id}`);
 
     try {
       const prediction = bet.prediction;
@@ -37,6 +37,9 @@ export class BetProcessor {
         },
         data: {
           balance: {
+            increment: winAmount,
+          },
+          totalWin: {
             increment: winAmount,
           },
           transactions: {
@@ -61,9 +64,9 @@ export class BetProcessor {
 
       await this.databaseService.$transaction([update_wallet, create_win]);
 
-      console.log(`processed bet id:: ${bet.id}`)
+      console.log(`processed bet id:: ${bet.id}`);
     } catch (error) {
-      console.log(`failed to process bet id:: ${bet.id}`)
+      console.log(`failed to process bet id:: ${bet.id}`);
       throw error;
     }
   }

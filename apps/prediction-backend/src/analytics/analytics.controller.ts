@@ -39,14 +39,33 @@ export class AnalyticsController {
     @Query('to') to: string | undefined = undefined,
     @Query('limit') limit: string = '10',
     @Query('skip') skip: string = '0',
+    @Query('type') type: string = 'Daily',
   ) {
     if (req.user.role !== 'Admin') throw new UnauthorizedException();
-    return this.analyticsService.getProfits(from, to, limit, skip);
+    return this.analyticsService.getProfits(from, to, limit, skip, type);
   }
 
   @Get('/transactions')
   getWithdrawalsData(@Request() req) {
     if (req.user.role !== 'Admin') throw new UnauthorizedException();
     return this.analyticsService.getTransactionDataForLast2Months();
+  }
+
+  @Get('/topplayers')
+  getTopPlayers(@Request() req, @Query('limit') limit = 5) {
+    if (req.user.role !== 'Admin') throw new UnauthorizedException();
+    return this.analyticsService.getTopPlayers(limit);
+  }
+
+  @Get('/deposits')
+  getDeposits(@Request() req) {
+    if (req.user.role !== 'Admin') throw new UnauthorizedException();
+    return this.analyticsService.getDeposits();
+  }
+
+  @Get('/withdrawals')
+  getWithdrawals(@Request() req) {
+    if (req.user.role !== 'Admin') throw new UnauthorizedException();
+    return this.analyticsService.getWithdrawals();
   }
 }

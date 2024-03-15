@@ -70,13 +70,26 @@ export class BetsService {
     }
 
     await this.databaseService.$transaction(async (txn) => {
-      const wallet = await txn.wallet.update({
+      const wallet = await txn.wallet.findFirst({
+        where: {
+          userId: userid,
+        },
+        select: {
+          locked: true,
+        },
+      });
+
+      const updatedWallet = await txn.wallet.update({
         where: {
           userId: userid,
         },
         data: {
           balance: {
             decrement: createBetDto.amount,
+          },
+          locked: Math.max(Number(wallet.locked) - createBetDto.amount, 0),
+          totalBet: {
+            increment: createBetDto.amount,
           },
           transactions: {
             create: {
@@ -88,7 +101,7 @@ export class BetsService {
         },
       });
 
-      if (Number(wallet.balance) < 0)
+      if (Number(updatedWallet.balance) < 0)
         throw new HttpException('Insufficient Balance', HttpStatus.BAD_REQUEST);
 
       const ServiceTexAmount =

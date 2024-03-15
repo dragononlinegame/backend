@@ -55,10 +55,27 @@ export class UsersService {
     }
   }
 
-  async findAll(limit: string, skip: string) {
+  async findAll(
+    limit: string,
+    skip: string,
+    filterBy: undefined | string,
+    filterValue: undefined | string,
+  ) {
     const users = await this.databaseService.user.findMany({
       where: {
         role: 'User',
+        phone:
+          filterBy === 'phone'
+            ? {
+                contains: filterValue,
+              }
+            : undefined,
+        username:
+          filterBy === 'username'
+            ? {
+                contains: filterValue,
+              }
+            : undefined,
       },
       take: parseInt(limit),
       skip: parseInt(skip),
