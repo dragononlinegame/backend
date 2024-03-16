@@ -226,6 +226,7 @@ export class BetsService {
 
     const total = await this.databaseService.bet.count({
       where: {
+        userId: userid,
         game: {
           type: parsedType,
         },
