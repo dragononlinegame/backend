@@ -10,7 +10,7 @@ import { CommissionProcessor } from './commission.processor';
       redis: {
         host: process.env.RADIS_HOST,
         port: parseInt(process.env.RADIS_PORT as string),
-        password: process.env.RADIS_PASS,
+        // password: process.env.RADIS_PASS,
       },
     }),
     BullModule.registerQueue({
@@ -21,6 +21,6 @@ import { CommissionProcessor } from './commission.processor';
     }),
     DatabaseModule,
   ],
-  providers: [BetProcessor, CommissionProcessor]
+  providers: [BetProcessor, CommissionProcessor],
 })
 export class QueueWorkersModule {}

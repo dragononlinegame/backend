@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "franchise" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

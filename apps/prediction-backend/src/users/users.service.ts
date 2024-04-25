@@ -56,6 +56,7 @@ export class UsersService {
   }
 
   async findAll(
+    franchise: undefined | string,
     limit: string,
     skip: string,
     filterBy: undefined | string,
@@ -63,7 +64,7 @@ export class UsersService {
   ) {
     const users = await this.databaseService.user.findMany({
       where: {
-        role: 'User',
+        franchiseCode: franchise,
         phone:
           filterBy === 'phone'
             ? {
@@ -85,7 +86,8 @@ export class UsersService {
         email: true,
         username: true,
         referralCode: true,
-        role: true,
+        franchiseCode: true,
+
         status: true,
         isBanned: true,
         createdAt: true,
@@ -100,7 +102,7 @@ export class UsersService {
 
     const total = await this.databaseService.user.count({
       where: {
-        role: 'User',
+        franchiseCode: franchise,
       },
     });
 
@@ -124,7 +126,8 @@ export class UsersService {
         email: true,
         username: true,
         referralCode: true,
-        role: true,
+        franchiseCode: true,
+
         status: true,
         isBanned: true,
         createdAt: true,
@@ -149,7 +152,7 @@ export class UsersService {
         username: true,
         password: true,
         referralCode: true,
-        role: true,
+
         status: true,
         isBanned: true,
         createdAt: true,
@@ -174,7 +177,7 @@ export class UsersService {
         username: true,
         password: true,
         referralCode: true,
-        role: true,
+
         status: true,
         isBanned: true,
         createdAt: true,
@@ -183,6 +186,29 @@ export class UsersService {
 
     if (!user)
       throw new NotFoundException(`Can not find user with email ${email}`);
+
+    return { success: true, data: user };
+  }
+
+  async findOneByUsername(username: string) {
+    const user = await this.databaseService.user.findUnique({
+      where: {
+        username,
+      },
+      select: {
+        id: true,
+        username: true,
+
+        status: true,
+        isBanned: true,
+        createdAt: true,
+      },
+    });
+
+    if (!user)
+      throw new NotFoundException(
+        `Can not find user with username ${username}`,
+      );
 
     return { success: true, data: user };
   }
@@ -200,7 +226,9 @@ export class UsersService {
           phone: true,
           email: true,
           username: true,
-          role: true,
+          franchiseCode: true,
+          referralCode: true,
+
           status: true,
           isBanned: true,
           createdAt: true,

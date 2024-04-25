@@ -23,6 +23,8 @@ import { SupportModule } from './support/support.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { StorageModule } from './storage/storage.module';
+import { FranchiseModule } from './franchise/franchise.module';
+import { ConnectionModule } from './connections/connection.module';
 
 @Module({
   imports: [
@@ -37,7 +39,7 @@ import { StorageModule } from './storage/storage.module';
       redis: {
         host: process.env.RADIS_HOST,
         port: parseInt(process.env.RADIS_PORT as string),
-        password: process.env.RADIS_PASS,
+        // password: process.env.RADIS_PASS,
       },
     }),
     ThrottlerModule.forRoot([
@@ -57,6 +59,8 @@ import { StorageModule } from './storage/storage.module';
     DatabaseModule,
     AuthModule,
     UsersModule,
+    ConnectionModule,
+    FranchiseModule,
     WalletModule,
     GamesModule,
     BetsModule,

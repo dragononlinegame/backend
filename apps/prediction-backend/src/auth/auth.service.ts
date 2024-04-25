@@ -12,6 +12,7 @@ import { DatabaseService } from '../database/database.service';
 import { UserRegisteredEvent } from './events/userRegisteredEvent';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Response } from 'express';
+import { roles } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -43,9 +44,59 @@ export class AuthService {
     }
 
     const payload = {
+      role: 'user',
       sub: user.id,
       phone: user.phone,
       username: user.username,
+    };
+
+    const access_token = await this.jwtService.signAsync(payload);
+
+    response.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+    });
+
+    return response.json({
+      success: true,
+      data: {
+        access_token,
+      },
+    });
+  }
+
+  async signinWithAdministrativeRole(
+    type: string,
+    id: string,
+    password: string,
+    @Res() response: Response,
+  ) {
+    const franchise = await this.databaseService.franchise.findFirst({
+      where: {
+        OR: [
+          {
+            phone: id,
+          },
+          {
+            franchiseId: id,
+          },
+        ],
+        role: type as roles,
+      },
+    });
+
+    if (
+      !franchise ||
+      !(await this.comparePasswords(password, franchise.password))
+    ) {
+      throw new UnauthorizedException('invalid credentials');
+    }
+
+    const payload = {
+      role: 'franchise',
+      sub: franchise.id,
+      id: franchise.franchiseId,
     };
 
     const access_token = await this.jwtService.signAsync(payload);
@@ -72,13 +123,19 @@ export class AuthService {
   ) {
     const hashedPassword = await this.hashPassword(password);
 
-    const referrer = await this.databaseService.user.findUnique({
+    const franchise = await this.databaseService.franchise.findUnique({
       where: {
-        referralCode: referral ?? '0000',
+        franchiseCode: referral.split('_')[0].toLowerCase(),
       },
     });
 
-    if (!referrer) {
+    const referrer = await this.databaseService.user.findUnique({
+      where: {
+        referralCode: referral.split('_')[1],
+      },
+    });
+
+    if (!referrer && referral.split('_')[1] !== '0000') {
       throw new BadRequestException('Invalid Referral Code');
     }
 
@@ -95,13 +152,19 @@ export class AuthService {
       password: hashedPassword,
       username: username ?? '',
       referralCode: ref_code,
+      franchise: {
+        connect: {
+          franchiseCode: franchise.franchiseCode,
+        },
+      },
     });
 
-    // Process Winnings asynchronusly
-    const userRegisteredEvent = new UserRegisteredEvent();
-    userRegisteredEvent.userId = user.id;
-    userRegisteredEvent.referrerId = referrer.id;
-    this.eventEmitter.emit('user.registered', userRegisteredEvent);
+    if (referrer) {
+      const userRegisteredEvent = new UserRegisteredEvent();
+      userRegisteredEvent.userId = user.id;
+      userRegisteredEvent.referrerId = referrer.id;
+      this.eventEmitter.emit('user.registered', userRegisteredEvent);
+    }
 
     const payload = {
       sub: user.id,

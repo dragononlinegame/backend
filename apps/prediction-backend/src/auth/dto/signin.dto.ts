@@ -7,3 +7,14 @@ export class SignInDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class SignInWithAdministrativeRoleDto {
+  @IsNotEmpty()
+  type: string;
+
+  @IsNotEmpty()
+  id: string;
+
+  @IsNotEmpty()
+  password: string;
+}

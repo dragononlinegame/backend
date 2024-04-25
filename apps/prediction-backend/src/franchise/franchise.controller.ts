@@ -10,25 +10,37 @@ import {
   Request,
   UseGuards,
   UnauthorizedException,
+  Post,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { FranchiseService } from './franchise.service';
 import { Prisma, roles } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard';
 import * as bcrypt from 'bcrypt';
 import { DatabaseService } from '../database/database.service';
 
 @UseGuards(AuthGuard)
-@Controller('users')
-export class UsersController {
+@Controller('franchises')
+export class FranchiseController {
   constructor(
     private readonly databaseService: DatabaseService,
-    private readonly usersService: UsersService,
+    private readonly franchiseService: FranchiseService,
   ) {}
 
   async hashPassword(password: string): Promise<string> {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     return hashedPassword;
+  }
+
+  @Post()
+  async create(@Request() req, @Body() body) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    const hashedPassword = await this.hashPassword(body.password);
+    return this.franchiseService.create(
+      body.phone,
+      hashedPassword,
+      body.credits,
+    );
   }
 
   @Get()
@@ -39,30 +51,13 @@ export class UsersController {
     @Query('filterBy') filterBy = undefined,
     @Query('filterValue') filterValue = undefined,
   ) {
-    if (roles.Admin === req.user.role) {
-      return this.usersService.findAll(
-        undefined,
-        limit,
-        skip,
-        filterBy,
-        filterValue,
-      );
-    } else if (roles.Franchise === req.user.role) {
-      return this.usersService.findAll(
-        req.user.franchiseCode,
-        limit,
-        skip,
-        filterBy,
-        filterValue,
-      );
-    } else {
-      throw new UnauthorizedException();
-    }
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.franchiseService.findAll(limit, skip, filterBy, filterValue);
   }
 
   @Get('profile')
   async profile(@Request() req) {
-    return this.usersService.findOneById(req.user.id);
+    return this.franchiseService.findOneById(req.user.id);
   }
 
   @Patch('profile')
@@ -70,7 +65,7 @@ export class UsersController {
     @Request() req,
     @Body() userUpdateInput: Prisma.userUpdateInput,
   ) {
-    return this.usersService.update(req.user.id, {
+    return this.franchiseService.update(req.user.id, {
       username: userUpdateInput.username,
       email: userUpdateInput.email,
     });
@@ -85,7 +80,7 @@ export class UsersController {
       userUpdateInput.password as string,
     );
 
-    return this.usersService.update(req.user.id, {
+    return this.franchiseService.update(req.user.id, {
       password: hashedPassword,
     });
   }
@@ -93,38 +88,32 @@ export class UsersController {
   @Get(':id')
   findOneById(@Request() req, @Param('id', ParseIntPipe) id: number) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
-    return this.usersService.findOneById(id);
-  }
-
-  @Get('findByUsername/:username')
-  findOneByUsername(@Request() req, @Param('username') username: string) {
-    return this.usersService.findOneByUsername(username);
+    return this.franchiseService.findOneById(id);
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Request() req,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserInput: Prisma.userUpdateInput,
   ) {
-    if ([roles.Admin, roles.Franchise].includes(req.user.role)) {
-      if (req.user.role === roles.Franchise) {
-        const user = await this.usersService.findOneById(id);
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.franchiseService.update(id, updateUserInput);
+  }
 
-        if (user.data.franchiseCode !== req.user.franchiseCode) {
-          throw new UnauthorizedException();
-        }
-      }
-
-      return this.usersService.update(id, updateUserInput);
-    }
-
-    throw new UnauthorizedException();
+  @Patch(':id/balance')
+  updateBalance(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body,
+  ) {
+    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+    return this.franchiseService.updateBalance(id, body.type, body.amount);
   }
 
   @Delete(':id')
   remove(@Request() req, @Param('id', ParseIntPipe) id: number) {
     if (req.user.role !== roles.Admin) throw new UnauthorizedException();
-    return this.usersService.remove(id);
+    return this.franchiseService.remove(id);
   }
 }

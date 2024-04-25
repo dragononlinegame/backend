@@ -67,7 +67,7 @@ export class SupportService {
     issueid: number,
     message: string,
   ) {
-    if (role === roles.User) {
+    if (role === 'User') {
       const issue = await this.databaseService.issue.findFirst({
         where: {
           id: issueid,
@@ -88,7 +88,7 @@ export class SupportService {
       data: {
         issueId: issueid,
         message: message,
-        responseBy: role === roles.User ? 'Issuer' : 'Resolver',
+        responseBy: role === 'User' ? 'Issuer' : 'Resolver',
       },
     });
 

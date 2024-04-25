@@ -1,0 +1,17 @@
+
+Franchise Implementation >>
+
+[X] Add Franchise table. 
+[ ] Franchise can be created from only master admin. 
+[ ] While Creating franchises each franchise will be credited with a limited amount of points based on purchased value.
+
+Franchises Panel Implementaion >> 
+
+[ ] Franchise Authentication.
+
+[ ] each franchise has to maintain their franchise balance, to get rewards.
+
+User Implementaions >>
+
+[ ] users registered under franchises can buy points only from the franchise if the franchise has balance. 
+[ ] 

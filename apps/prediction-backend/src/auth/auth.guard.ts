@@ -34,19 +34,34 @@ export class AuthGuard implements CanActivate {
       // so that we can access it in our route handlers
       // console.log(payload);
 
-      const user = await this.databaseService.user.findFirst({
-        where: {
-          id: payload.sub,
-        },
-        select: {
-          id: true,
-          username: true,
-          status: true,
-          role: true,
-        },
-      });
+      if (payload.role === 'user') {
+        const user = await this.databaseService.user.findFirst({
+          where: {
+            id: payload.sub,
+          },
+          select: {
+            id: true,
+            username: true,
+            status: true,
+          },
+        });
 
-      request['user'] = user;
+        request['user'] = { ...user, role: 'User' };
+      } else if (payload.role === 'franchise') {
+        const user = await this.databaseService.franchise.findUnique({
+          where: {
+            franchiseId: payload.id,
+          },
+          select: {
+            id: true,
+            franchiseCode: true,
+            franchiseId: true,
+            role: true,
+          },
+        });
+
+        request['user'] = user;
+      }
     } catch {
       throw new UnauthorizedException();
     }

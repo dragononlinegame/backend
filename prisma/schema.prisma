@@ -6,14 +6,14 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgres"
-  url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "postgres"
+  url      = env("DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum roles {
-  User
   Admin
+  Franchise
 }
 
 enum status {
@@ -51,6 +51,30 @@ enum issue_type {
   Other
 }
 
+enum request_status {
+  Paid
+  Declined
+  Pending
+}
+
+model franchise {
+  id Int @id @default(autoincrement())
+
+  phone    String  @unique
+  email    String? @unique
+  password String
+
+  franchiseId   String @unique
+  franchiseCode String @unique
+
+  balance Decimal @default(0)
+
+  role      roles    @default(Franchise)
+  createdAt DateTime @default(now())
+
+  users user[]
+}
+
 model user {
   id       Int     @id @default(autoincrement())
   phone    String  @unique
@@ -58,25 +82,31 @@ model user {
   username String  @unique
   password String
 
-  referralCode String @unique
+  franchiseCode String
+  referralCode  String @unique // Fcode_RCODE
 
   status userStatus @default(Active)
-  role   roles      @default(User)
 
   isBanned Boolean @default(false)
 
   createdAt DateTime @default(now())
 
+  franchise franchise @relation(fields: [franchiseCode], references: [franchiseCode])
+
   wallet wallet?
   bets   bet[]
   upline teamConfig[]
   issues issue[]
+
+  connectionFromMe     connection[] @relation("connection_user_one")
+  connectionFromOthers connection[] @relation("connection_user_two")
 }
 
 model teamConfig {
-  userId    Int
-  uplineId  Int
-  level     Int
+  userId   Int
+  uplineId Int
+  level    Int
+
   createdAt DateTime @default(now())
 
   user user @relation(fields: [userId], references: [id])
@@ -290,4 +320,33 @@ model response {
 
   issueId Int
   issue   issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+}
+
+model connection {
+  id        Int       @id @default(autoincrement())
+  userOneId Int
+  userTwoId Int
+  requests  request[]
+
+  userOne user @relation("connection_user_one", fields: [userOneId], references: [id])
+  userTwo user @relation("connection_user_two", fields: [userTwoId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model request {
+  id BigInt @id @default(autoincrement())
+
+  connectionId Int
+  senderId     Int
+  receiverId   Int
+
+  amount Decimal @default(0)
+  note   String?
+
+  connection connection @relation(fields: [connectionId], references: [id])
+
+  status request_status @default(Pending)
+
+  createdAt DateTime @default(now())
 }

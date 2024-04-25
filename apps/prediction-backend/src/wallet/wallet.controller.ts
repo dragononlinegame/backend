@@ -393,14 +393,31 @@ export class WalletController {
   }
 
   @Post('make-txn')
-  makeWalletTransaction(@Request() req, @Body() body) {
-    if (req.user.role !== roles.Admin) throw new UnauthorizedException();
+  async makeWalletTransaction(@Request() req, @Body() body) {
+    if ([roles.Admin, roles.Franchise].includes(req.user.role)) {
+      if (req.user.role === roles.Franchise) {
+        const user = await this.databaseService.user.findFirst({
+          where: {
+            id: body.userid,
+          },
+          select: {
+            franchiseCode: true,
+          },
+        });
 
-    return this.walletService.makeTransaction(
-      body.userid,
-      body.amount,
-      body.action,
-      body.note,
-    );
+        if (user.franchiseCode !== req.user.franchiseCode) {
+          throw new UnauthorizedException();
+        }
+      }
+
+      return this.walletService.makeTransaction(
+        body.userid,
+        body.amount,
+        body.action,
+        body.note,
+      );
+    }
+
+    throw new UnauthorizedException();
   }
 }

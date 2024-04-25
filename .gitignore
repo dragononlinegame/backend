@@ -17,6 +17,7 @@ lerna-debug.log*
 
 #envs
 .env
+.env.dev
 
 # Tests
 /coverage

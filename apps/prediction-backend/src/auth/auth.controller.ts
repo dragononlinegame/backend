@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SignInDto } from './dto/signin.dto';
+import { SignInDto, SignInWithAdministrativeRoleDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto';
 import { Response } from 'express';
 import { AuthGuard } from './auth.guard';
@@ -13,6 +13,19 @@ export class AuthController {
   signIn(@Body() signInDto: SignInDto, @Res() response: Response) {
     return this.authService.signin(
       signInDto.phone,
+      signInDto.password,
+      response,
+    );
+  }
+
+  @Post('admin/signin')
+  signInWithAdministrativeRole(
+    @Body() signInDto: SignInWithAdministrativeRoleDto,
+    @Res() response: Response,
+  ) {
+    return this.authService.signinWithAdministrativeRole(
+      signInDto.type,
+      signInDto.id,
       signInDto.password,
       response,
     );
